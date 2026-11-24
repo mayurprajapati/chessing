@@ -5,7 +5,7 @@
 
 ## Goal
 
-Make `ChessistEngine.exe` (native Stockfish) the **sole** analysis engine. Remove
+Make `ChessingEngine.exe` (native Stockfish) the **sole** analysis engine. Remove
 the WASM/offscreen engine and the Python launcher entirely. This is a performance
 change: native Stockfish is 10–100× faster than the WASM build.
 
@@ -16,10 +16,10 @@ are fed by the native engine over the existing WebSocket (`ws://127.0.0.1:27301`
 ## Architecture after the change
 
 ```
-content.js / lichess.js ──WS ws://127.0.0.1:27301──► ChessistEngine.exe ──► Stockfish
+content.js / lichess.js ──WS ws://127.0.0.1:27301──► ChessingEngine.exe ──► Stockfish
         │                                                   ▲
         └─ chrome.runtime ─► service-worker ─► native msg ──┘ (launch/restart/kill)
-                                                  (ChessistEngine.exe in host-bridge mode)
+                                                  (ChessingEngine.exe in host-bridge mode)
 ```
 
 One binary, two roles:
@@ -35,7 +35,7 @@ Mode is selected in `Main()`: if `args` contains an origin starting with
 argument) — or an explicit `-host` flag — run `HostBridge.Run()` and return before
 any UI init. Otherwise run the normal overlay/engine app.
 
-A system-wide named `Mutex` (e.g. `Global\ChessistEngine`) makes launching idempotent:
+A system-wide named `Mutex` (e.g. `Global\ChessingEngine`) makes launching idempotent:
 the normal-mode instance acquires it on startup; a second normal instance exits
 immediately; the host bridge checks the mutex to answer "is the engine running?".
 
@@ -49,7 +49,7 @@ immediately; the host bridge checks the mutex to answer "is the engine running?"
   - stdin: read 4-byte little-endian length prefix + JSON message.
   - stdout: write 4-byte length prefix + JSON reply.
   - `launch` → if engine not already running (mutex check), `Process.Start` a detached
-    normal-mode `ChessistEngine.exe` (`DETACHED_PROCESS | CREATE_NO_WINDOW`, or
+    normal-mode `ChessingEngine.exe` (`DETACHED_PROCESS | CREATE_NO_WINDOW`, or
     `-debug` window when requested). Reply `{type:"launch_result", success:…}`.
   - `restart` → kill, brief wait, launch.
   - `kill` → signal the running instance to exit (mutex-named event / `taskkill`).
@@ -60,7 +60,7 @@ immediately; the host bridge checks the mutex to answer "is the engine running?"
 ### 2. Native-messaging registration
 
 - `native-host/com.chess.live.eval.json`: `path` → the absolute path of
-  `…\overlay\bin\Release\net48\ChessistEngine.exe` (no `.bat`).
+  `…\overlay\bin\Release\net48\ChessingEngine.exe` (no `.bat`).
 - **Delete** `native-host/stockfish_host.py` and `native-host/stockfish_host.bat`.
 
 ### 3. `src/background/service-worker.js` — slim down
@@ -117,10 +117,10 @@ immediately; the host bridge checks the mutex to answer "is the engine running?"
 ### 8. `setup.bat`
 
 - Remove the Python check (step 1).
-- Generate `com.chess.live.eval.json` with `path` pointing at `ChessistEngine.exe`.
+- Generate `com.chess.live.eval.json` with `path` pointing at `ChessingEngine.exe`.
 - Keep extension-ID prompt + registry registration (Chrome + Brave) and the optional
   Windows-startup entry.
-- Build hint: `dotnet build overlay\ChessistOverlay.csproj -c Release`.
+- Build hint: `dotnet build overlay\ChessingOverlay.csproj -c Release`.
 
 ## Error / edge handling
 

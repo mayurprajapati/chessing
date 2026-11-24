@@ -2,14 +2,14 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove binaries from git, download from GitHub Releases at install time, add self-healing Stockfish download to ChessistEngine.exe, add BootstrapGate React UI with Eldritch theme + Chessist purple.
+**Goal:** Remove binaries from git, download from GitHub Releases at install time, add self-healing Stockfish download to ChessingEngine.exe, add BootstrapGate React UI with Eldritch theme + Chessing purple.
 
-**Architecture:** setup.bat fetches ChessistEngine.exe + UI from a tagged GitHub Release; ChessistEngine.exe auto-downloads stockfish.exe if missing; React panel shows a BootstrapGate checklist then live eval; theme matches Eldritch's flat pitch-black style with `#792A9E` purple accent.
+**Architecture:** setup.bat fetches ChessingEngine.exe + UI from a tagged GitHub Release; ChessingEngine.exe auto-downloads stockfish.exe if missing; React panel shows a BootstrapGate checklist then live eval; theme matches Eldritch's flat pitch-black style with `#792A9E` purple accent.
 
 **Tech Stack:** PowerShell (setup), GitHub Actions (CI), C# .NET 4.8 + HttpClient + ZipFile (auto-download), React 18 + TypeScript + Vite (UI), CSS variables.
 
 **Extension ID:** `oecfgiflfobnbajnpanbpjnnkgdhiifb`  
-**Chessist purple:** `#792A9E`
+**Chessing purple:** `#792A9E`
 
 ---
 
@@ -17,7 +17,7 @@
 
 **Files:**
 - Modify: `.gitignore`
-- Delete from tracking: `engine/bin/Release/net48/ChessistEngine.exe`, `engine/bin/Release/net48/ChessistEngine.exe.config`, `engine/bin/Release/net48/stockfish.exe`, `engine/bin/Release/net48/ui/`
+- Delete from tracking: `engine/bin/Release/net48/ChessingEngine.exe`, `engine/bin/Release/net48/ChessingEngine.exe.config`, `engine/bin/Release/net48/stockfish.exe`, `engine/bin/Release/net48/ui/`
 
 - [ ] **Step 1: Update .gitignore**
 
@@ -35,9 +35,9 @@ native-host/__pycache__/
 - [ ] **Step 2: Untrack compiled output**
 
 ```powershell
-cd "c:\Users\luri\Documents\Programming\Chessist"
-git rm --cached "engine/bin/Release/net48/ChessistEngine.exe"
-git rm --cached "engine/bin/Release/net48/ChessistEngine.exe.config"
+cd "c:\Users\luri\Documents\Programming\Chessing"
+git rm --cached "engine/bin/Release/net48/ChessingEngine.exe"
+git rm --cached "engine/bin/Release/net48/ChessingEngine.exe.config"
 git rm --cached "engine/bin/Release/net48/stockfish.exe"
 git rm -r --cached "engine/bin/Release/net48/ui"
 ```
@@ -47,7 +47,7 @@ Note: the files remain on disk — only git stops tracking them.
 - [ ] **Step 3: Verify files are still on disk**
 
 ```powershell
-Test-Path "engine/bin/Release/net48/ChessistEngine.exe"
+Test-Path "engine/bin/Release/net48/ChessingEngine.exe"
 Test-Path "engine/bin/Release/net48/stockfish.exe"
 Test-Path "engine/bin/Release/net48/ui/index.html"
 ```
@@ -97,8 +97,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Build ChessistEngine
-        run: dotnet build engine/ChessistEngine.csproj -c Release
+      - name: Build ChessingEngine
+        run: dotnet build engine/ChessingEngine.csproj -c Release
 
       - name: Build React UI
         working-directory: ui
@@ -110,10 +110,10 @@ jobs:
         shell: pwsh
         run: |
           $src = "engine/bin/Release/net48"
-          $zip = "chessist-engine-windows.zip"
+          $zip = "chessing-engine-windows.zip"
           $items = @(
-            "$src/ChessistEngine.exe",
-            "$src/ChessistEngine.exe.config",
+            "$src/ChessingEngine.exe",
+            "$src/ChessingEngine.exe.config",
             "$src/ui"
           )
           Compress-Archive -Path $items -DestinationPath $zip -Force
@@ -122,7 +122,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: chessist-engine-windows.zip
+          files: chessing-engine-windows.zip
           generate_release_notes: true
 ```
 
@@ -145,38 +145,38 @@ git commit -m "ci: add GitHub Actions release workflow"
 ```bat
 @echo off
 setlocal EnableDelayedExpansion
-title Chessist Setup
+title Chessing Setup
 
 set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 set "BIN=%ROOT%\engine\bin\Release\net48"
 set "HOST_DIR=%ROOT%\host"
-set "MANIFEST=%HOST_DIR%\com.chessist.engine.json"
-set "EXE=%BIN%\ChessistEngine.exe"
+set "MANIFEST=%HOST_DIR%\com.chessing.engine.json"
+set "EXE=%BIN%\ChessingEngine.exe"
 set "SF=%BIN%\stockfish.exe"
 
 echo.
-echo  === Chessist Setup ===
+echo  === Chessing Setup ===
 echo.
 
 :: ── Create output directory ────────────────────────────────────────────────────
 if not exist "%BIN%" mkdir "%BIN%"
 
-:: ── Download ChessistEngine if missing ────────────────────────────────────────
+:: ── Download ChessingEngine if missing ────────────────────────────────────────
 if not exist "%EXE%" (
-    echo  Downloading ChessistEngine...
+    echo  Downloading ChessingEngine...
     powershell -NoProfile -Command ^
         "$r = Invoke-RestMethod 'https://api.github.com/repos/imluri/Chessist/releases/latest';" ^
-        "$a = $r.assets | Where-Object { $_.name -eq 'chessist-engine-windows.zip' };" ^
+        "$a = $r.assets | Where-Object { $_.name -eq 'chessing-engine-windows.zip' };" ^
         "if (-not $a) { Write-Error 'Release asset not found'; exit 1 }" ^
         "$t = [System.IO.Path]::GetTempFileName() + '.zip';" ^
         "Invoke-WebRequest $a.browser_download_url -OutFile $t;" ^
         "Expand-Archive $t -DestinationPath '%BIN%' -Force;" ^
         "Remove-Item $t -Force"
-    if errorlevel 1 ( echo  ERROR: Failed to download ChessistEngine. & pause & exit /b 1 )
-    echo  ChessistEngine downloaded.
+    if errorlevel 1 ( echo  ERROR: Failed to download ChessingEngine. & pause & exit /b 1 )
+    echo  ChessingEngine downloaded.
 ) else (
-    echo  ChessistEngine already present, skipping download.
+    echo  ChessingEngine already present, skipping download.
 )
 
 :: ── Download Stockfish if missing ─────────────────────────────────────────────
@@ -203,8 +203,8 @@ if not exist "%SF%" (
 :: ── Write native-messaging manifest ───────────────────────────────────────────
 (
 echo {
-echo   "name": "com.chessist.engine",
-echo   "description": "Chessist - Engine Launcher",
+echo   "name": "com.chessing.engine",
+echo   "description": "Chessing - Engine Launcher",
 echo   "path": "%EXE:\=\\%",
 echo   "type": "stdio",
 echo   "allowed_origins": [
@@ -214,14 +214,14 @@ echo }
 ) > "!MANIFEST!"
 
 :: ── Register for Chrome, Brave, Edge ──────────────────────────────────────────
-reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessist.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
-reg add "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.chessist.engine" /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.chessist.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessing.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.chessing.engine" /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.chessing.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
 reg delete "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chess.live.eval"             /f >nul 2>&1
 reg delete "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.chess.live.eval" /f >nul 2>&1
 
 if /i "%1"=="--startup" (
-    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "ChessistEngine" /t REG_SZ /d "\"!EXE!\"" /f >nul 2>&1
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "ChessingEngine" /t REG_SZ /d "\"!EXE!\"" /f >nul 2>&1
     echo  Added to Windows startup.
 )
 
@@ -236,7 +236,7 @@ endlocal
 
 ```powershell
 git add setup.bat
-git commit -m "feat: setup.bat downloads ChessistEngine and Stockfish from GitHub releases"
+git commit -m "feat: setup.bat downloads ChessingEngine and Stockfish from GitHub releases"
 ```
 
 ---
@@ -264,7 +264,7 @@ After the `FindStockfish()` method, insert:
                 var destPath = Path.Combine(exeDir, "stockfish.exe");
 
                 using var http = new System.Net.Http.HttpClient();
-                http.DefaultRequestHeaders.Add("User-Agent", "ChessistEngine/1.0");
+                http.DefaultRequestHeaders.Add("User-Agent", "ChessingEngine/1.0");
 
                 // Fetch latest Stockfish release metadata
                 var json = await http.GetStringAsync(
@@ -422,7 +422,7 @@ BroadcastBootstrapStatus(BroadcastAsync, false); // extension status updated sep
 - [ ] **Step 6: Build and verify**
 
 ```powershell
-dotnet build engine/ChessistEngine.csproj -c Release
+dotnet build engine/ChessingEngine.csproj -c Release
 ```
 
 Expected: 0 errors.
@@ -590,7 +590,7 @@ export default function BootstrapGate({ wsConnected, bootstrap }: Props) {
           background: 'var(--surface)',
           fontSize: 12, color: 'var(--fg-muted)', lineHeight: 1.6,
         }}>
-          Load Chessist in <span style={{ color: 'var(--fg)', fontFamily: 'monospace' }}>chrome://extensions</span>
+          Load Chessing in <span style={{ color: 'var(--fg)', fontFamily: 'monospace' }}>chrome://extensions</span>
           {' '}then open a game on chess.com or lichess.org.
         </div>
       )}
@@ -791,7 +791,7 @@ export default function App() {
           background: wsConnected ? 'var(--accent)' : 'var(--fg-dim)',
           boxShadow: wsConnected ? 'var(--accent-glow)' : 'none',
         }} />
-        <span style={{ fontWeight: 700, letterSpacing: '0.08em', fontSize: 12 }}>CHESSIST</span>
+        <span style={{ fontWeight: 700, letterSpacing: '0.08em', fontSize: 12 }}>CHESSING</span>
         <span style={{ marginLeft: 'auto', color: 'var(--fg-muted)', fontSize: 11 }}>{statusLabel}</span>
       </div>
 
@@ -862,7 +862,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 - [ ] Build:
 
 ```powershell
-cd "c:\Users\luri\Documents\Programming\Chessist\ui"
+cd "c:\Users\luri\Documents\Programming\Chessing\ui"
 npm run build
 cd ..
 ```
@@ -878,12 +878,12 @@ git commit -m "feat: Eldritch theme + purple accent + BootstrapGate UI"
 
 ---
 
-## Task 7: Rebuild ChessistEngine.exe with new Program.cs changes
+## Task 7: Rebuild ChessingEngine.exe with new Program.cs changes
 
 - [ ] **Step 1: Build**
 
 ```powershell
-dotnet build engine/ChessistEngine.csproj -c Release
+dotnet build engine/ChessingEngine.csproj -c Release
 ```
 
 Expected: 0 errors.
@@ -905,11 +905,11 @@ Add to top of `CHANGELOG.md`:
 
 ### Changed
 - **Lean repo** — compiled binaries removed from git; repo is now ~4 MB
-- **GitHub Actions CI** — tagged releases build and publish `chessist-engine-windows.zip`
-- **setup.bat downloads binaries** — ChessistEngine.exe and Stockfish.exe fetched from GitHub releases on first run
-- **Auto-download Stockfish** — ChessistEngine.exe auto-fetches Stockfish if missing, with WS progress broadcast
+- **GitHub Actions CI** — tagged releases build and publish `chessing-engine-windows.zip`
+- **setup.bat downloads binaries** — ChessingEngine.exe and Stockfish.exe fetched from GitHub releases on first run
+- **Auto-download Stockfish** — ChessingEngine.exe auto-fetches Stockfish if missing, with WS progress broadcast
 - **Extension detection** — engine detects when Chrome extension is connected
-- **Eldritch theme** — React panel matches Eldritch's flat pitch-black aesthetic with Chessist purple (`#792A9E`) accent
+- **Eldritch theme** — React panel matches Eldritch's flat pitch-black aesthetic with Chessing purple (`#792A9E`) accent
 - **BootstrapGate** — React panel shows setup checklist until engine + stockfish + extension are all ready
 ```
 

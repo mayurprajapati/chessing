@@ -19,4 +19,4 @@ await Bun.build({
   },
 })
 
-console.log(`Built Chessist WebSocket worker: ${output}`)
+console.log(`Built Chessing WebSocket worker: ${output}`)

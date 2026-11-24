@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Chessist",
+  "name": "Chessing",
   "version": "3.0.4",
   "description": "Live chess evaluation bar for Chess.com and Lichess - powered by Stockfish. Created by imluri.",
   "permissions": [
@@ -21,13 +21,13 @@
   "content_scripts": [
     {
       "matches": ["https://www.chess.com/*"],
-      "js": ["src/content/move-observer.js", "src/content/content.js"],
+      "js": ["src/content/move-observer.js", "src/content/move-history.js", "src/content/content.js"],
       "css": ["src/content/content.css"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://lichess.org/*"],
-      "js": ["src/content/move-observer.js", "src/content/lichess.js"],
+      "js": ["src/content/move-observer.js", "src/content/move-history.js", "src/content/lichess.js"],
       "css": ["src/content/content.css"],
       "run_at": "document_idle"
     }

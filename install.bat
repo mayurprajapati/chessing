@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableDelayedExpansion
-title Chessist - Build ^& Install
+title Chessing - Build ^& Install
 
 :: ---- Self-elevate to Administrator ----
 :: electron-builder extracts winCodeSign, which creates symlinks. A normal user
@@ -20,7 +20,7 @@ cd /d "%ROOT%"
 
 echo.
 echo  ============================================
-echo    Chessist - build ^& install
+echo    Chessing - build ^& install
 echo  ============================================
 echo.
 
@@ -67,7 +67,7 @@ if errorlevel 1 (
 echo.
 echo  [4/4] Launching the installer...
 set "SETUP="
-for /f "delims=" %%f in ('dir /b /o-d "%ROOT%\release\Chessist Setup *.exe" 2^>nul') do (
+for /f "delims=" %%f in ('dir /b /o-d "%ROOT%\release\Chessing Setup *.exe" 2^>nul') do (
     if not defined SETUP set "SETUP=%ROOT%\release\%%f"
 )
 if not defined SETUP (
@@ -83,7 +83,7 @@ echo  ============================================
 echo    Done - the installer is running.
 echo  ============================================
 echo.
-echo  1. Finish the installer; Chessist installs and launches automatically.
+echo  1. Finish the installer; Chessing installs and launches automatically.
 echo  2. In the app, open the Setup tab and follow the
 echo     "Browser extension" card to load the extension.
 echo  3. Open a game on chess.com or lichess.org.
@@ -99,7 +99,7 @@ echo  Building the app (renderer)...
 call npm run build
 if errorlevel 1 ( echo  ERROR: app build failed. & pause & exit /b 1 )
 
-echo  Creating the Chessist shortcut...
+echo  Creating the Chessing shortcut...
 set "ELECTRON=%ROOT%\node_modules\electron\dist\electron.exe"
 if not exist "%ELECTRON%" (
     echo  Electron runtime not found at:
@@ -112,14 +112,14 @@ powershell -NoProfile -Command ^
     "$el=Join-Path $root 'node_modules\electron\dist\electron.exe';" ^
     "$ico=Join-Path $root 'build\icon.ico';" ^
     "$w=New-Object -ComObject WScript.Shell;" ^
-    "$s=$w.CreateShortcut((Join-Path $root 'Chessist.lnk'));" ^
+    "$s=$w.CreateShortcut((Join-Path $root 'Chessing.lnk'));" ^
     "$q=[char]34;" ^
     "$s.TargetPath=$el;" ^
     "$s.Arguments=$q+$root+$q+' --prod';" ^
     "$s.WorkingDirectory=$root;" ^
     "$s.IconLocation= if (Test-Path $ico) { $ico } else { $el };" ^
     "$s.Save()"
-if errorlevel 1 ( echo  Could not create the shortcut. ) else ( echo  "Chessist" shortcut created in this folder. )
+if errorlevel 1 ( echo  Could not create the shortcut. ) else ( echo  "Chessing" shortcut created in this folder. )
 
 :fallbackdone
 echo.
@@ -127,7 +127,7 @@ echo  ============================================
 echo    Done (portable).
 echo  ============================================
 echo.
-echo  1. Launch Chessist from the "Chessist" shortcut in this folder.
+echo  1. Launch Chessing from the "Chessing" shortcut in this folder.
 echo     (Keep this folder where it is - the app runs from here.)
 echo  2. In the app, open the Setup tab and follow the
 echo     "Browser extension" card to load the extension.

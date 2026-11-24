@@ -32,7 +32,7 @@ describe('pickWindowsAsset', () => {
 
 describe('cached Stockfish executable', () => {
   it.each([[0x8664, 'x64'], [0xaa64, 'arm64']])('identifies Windows executable architecture %s', (machine, arch) => {
-    const dir = mkdtempSync(join(tmpdir(), 'chessist-pe-test-'))
+    const dir = mkdtempSync(join(tmpdir(), 'chessing-pe-test-'))
     const file = join(dir, 'stockfish.exe')
     const stub = Buffer.alloc(134)
     stub.write('MZ')

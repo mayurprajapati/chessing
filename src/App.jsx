@@ -4,16 +4,16 @@ import { Icon } from '../ui-template/src/icons'
 import logo from './assets/logo.png'
 import SidebarShortcuts from './components/Sidebar'
 import { IconEval, IconSetup } from './components/icons'
-import ChessistSettings from './components/ChessistSettings'
+import ChessingSettings from './components/ChessingSettings'
 import EvaluationPage from './pages/EvaluationPage'
 import SetupPage from './pages/SetupPage'
 import AboutPage from './pages/AboutPage'
 
 const piecesKey = (fen) => (fen ? fen.split(' ')[0] : '')
 const brand = {
-  name: 'Chessist',
+  name: 'Chessing',
   caption: 'Desktop analysis',
-  mark: <img className="chessist-brand-logo" src={logo} alt="" />,
+  mark: <img className="chessing-brand-logo" src={logo} alt="" />,
 }
 const navigation = [
   { id: 'evaluation', label: 'Evaluation', icon: <IconEval aria-hidden="true" /> },
@@ -23,11 +23,11 @@ const navigation = [
 ]
 
 const windowControls = {
-  minimize: () => window.chessist.minimizeWindow(),
-  toggleMaximize: () => window.chessist.maximizeWindow(),
-  close: () => window.chessist.closeWindow(),
-  isMaximized: () => window.chessist.isWindowMaximized(),
-  onMaximizedChange: callback => window.chessist.onWindowMaximizedChange(callback),
+  minimize: () => window.chessing.minimizeWindow(),
+  toggleMaximize: () => window.chessing.maximizeWindow(),
+  close: () => window.chessing.closeWindow(),
+  isMaximized: () => window.chessing.isWindowMaximized(),
+  onMaximizedChange: callback => window.chessing.onWindowMaximizedChange(callback),
 }
 
 export default function App() {
@@ -47,11 +47,11 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true
-    const api = window.chessist
+    const api = window.chessing
     const load = (scope, read) => read().then(values => {
       if (mounted) setSettings(previous => ({ ...previous, [scope]: values }))
     }).catch(() => {
-      if (mounted) setSettingsLoadError('Could not load some settings. Restart Chessist to try again.')
+      if (mounted) setSettingsLoadError('Could not load some settings. Restart Chessing to try again.')
     })
     load('game', api.getGameSettings)
     load('engine', api.getEngineSettings)
@@ -64,7 +64,7 @@ export default function App() {
   }, [])
 
   async function changeSetting(scope, key, value) {
-    const api = window.chessist
+    const api = window.chessing
     const read = scope === 'game' ? api.getGameSettings : api.getEngineSettings
     const write = scope === 'game' ? api.setGameOption : api.setEngineOption
     const field = `${scope}.${key}`
@@ -94,7 +94,7 @@ export default function App() {
     const previousIds = shortcutIds
     setShortcutError('')
     setShortcutIds(ids)
-    window.chessist.setSidebarShortcuts(ids).then(saved => {
+    window.chessing.setSidebarShortcuts(ids).then(saved => {
       setShortcutIds(current => current === ids ? saved : current)
     }).catch(() => {
       setShortcutIds(current => current === ids ? previousIds : current)
@@ -103,25 +103,25 @@ export default function App() {
   }
 
   useEffect(() => {
-    window.chessist.getStatus().then(setStatus)
-    const offS = window.chessist.onStatus((nextStatus) => {
+    window.chessing.getStatus().then(setStatus)
+    const offS = window.chessing.onStatus((nextStatus) => {
       setStatus(nextStatus)
       if (nextStatus.stockfishState !== 'ready') setEv(null)
       if (!nextStatus.chessConnected) setAutoMoveStatus(null)
     })
-    const offP = window.chessist.onPosition?.((p) => {
+    const offP = window.chessing.onPosition?.((p) => {
       posRef.current = p
       setPos(previous => previous?.fen === p?.fen && previous?.flipped === p?.flipped ? previous : p)
     })
-    const offE = window.chessist.onEval((e) => {
+    const offE = window.chessing.onEval((e) => {
       // Ignore speculative / stale evals — only show ones for the current board.
       const cur = posRef.current?.fen
       if (cur && e.fen && piecesKey(e.fen) !== piecesKey(cur)) return
       setEv(e)
     })
-    const offMove = window.chessist.onAutoMoveStatus?.(setAutoMoveStatus)
+    const offMove = window.chessing.onAutoMoveStatus?.(setAutoMoveStatus)
     // Auto-check for updates on launch.
-    window.chessist.checkUpdate?.().then(setUpdateStatus).catch(() => {})
+    window.chessing.checkUpdate?.().then(setUpdateStatus).catch(() => {})
     return () => { offS(); offE(); offP?.(); offMove?.() }
   }, [])
 
@@ -133,25 +133,25 @@ export default function App() {
       sidebarTools={<SidebarShortcuts settings={settings} shortcutIds={shortcutIds} shortcutError={shortcutError}
         onSettingChange={changeSetting} onShortcutsChange={changeShortcuts} />}
       sidebarFooter={<div className="workspace">
-        <span className="workspace-avatar chessist-connection" data-ready={engineReady} aria-hidden="true"><span /></span>
+        <span className="workspace-avatar chessing-connection" data-ready={engineReady} aria-hidden="true"><span /></span>
         <div className="workspace-copy">
           <strong>{engineReady ? 'Ready' : 'Setup'}</strong>
           <span>{status.extensionConnected ? 'Extension connected' : 'Extension disconnected'}</span>
         </div>
       </div>}
       banner={<>
-        {updateAvailable && page !== 'about' && <div className="chessist-banner">
+        {updateAvailable && page !== 'about' && <div className="chessing-banner">
           <span>A new version is available.</span>
           <button type="button" className="button button-primary" onClick={() => setPage('about')}>View update</button>
         </div>}
-        {status.message && page !== 'setup' && <div className="chessist-banner chessist-banner--status">{status.message}</div>}
+        {status.message && page !== 'setup' && <div className="chessing-banner chessing-banner--status">{status.message}</div>}
       </>}
     >
-      <div key={page} className={page === 'evaluation' ? 'chessist-evaluation' : undefined}>
+      <div key={page} className={page === 'evaluation' ? 'chessing-evaluation' : undefined}>
         {page === 'evaluation' && <EvaluationPage ev={ev} pos={pos} status={status} gameSettings={settings.game}
           autoMoveStatus={autoMoveStatus} onOpenSetup={() => setPage('setup')} />}
         {page === 'setup' && <SetupPage status={status} />}
-        {page === 'settings' && <ChessistSettings gameSettings={settings.game} engineSettings={settings.engine}
+        {page === 'settings' && <ChessingSettings gameSettings={settings.game} engineSettings={settings.engine}
           onGameChange={(key, value) => changeSetting('game', key, value)}
           onEngineChange={(key, value) => changeSetting('engine', key, value)}
           loadError={settingsLoadError} />}

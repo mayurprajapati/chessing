@@ -1,6 +1,6 @@
 # Desktop UI template
 
-A standalone React preview of the title bar, sidebar, and settings controls for the planned Chessist 3.0.0 UI. Try the sample settings in the preview before integrating the shell into Chessist.
+A standalone React preview of the title bar, sidebar, and settings controls for the planned Chessing 3.0.0 UI. Try the sample settings in the preview before integrating the shell into Chessing.
 
 From this directory, with Bun 1.3.10 or newer:
 

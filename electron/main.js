@@ -7,12 +7,13 @@ const { Overlay } = require('./overlay')
 const { Bridge } = require('./wsserver')
 const { PerformanceCheck } = require('./performance-check')
 const { Diagnostics } = require('./diagnostics')
+const { migrateLegacyUserData } = require('./legacy-data')
 const updater = require('./updater')
 
-// --prod (or CHESSIST_PROD=1) forces production mode when running unpacked from
+// --prod (or CHESSING_PROD=1) forces production mode when running unpacked from
 // the cloned repo via the local Electron (install.bat) — loads dist/ instead of
 // the Vite dev server.
-const forceProd = process.argv.includes('--prod') || process.env.CHESSIST_PROD === '1'
+const forceProd = process.argv.includes('--prod') || process.env.CHESSING_PROD === '1'
 const isDev = !app.isPackaged && !forceProd
 let mainWindow = null
 let overlay = null
@@ -24,7 +25,7 @@ let shutdownFinished = false
 let performanceCheck = null
 const diagnostics = new Diagnostics()
 
-// ── Settings persistence (userData/chessist-settings.json) ──
+// ── Settings persistence (userData/chessing-settings.json) ──
 // Game/display settings owned by the app and pushed to the extension over WS.
 const gameSettings = {
   enabled: true,
@@ -66,7 +67,7 @@ function normalizeSidebarShortcuts(ids) {
   }))]
 }
 
-function settingsPath() { return path.join(app.getPath('userData'), 'chessist-settings.json') }
+function settingsPath() { return path.join(app.getPath('userData'), 'chessing-settings.json') }
 function loadAll() {
   try { return JSON.parse(fs.readFileSync(settingsPath(), 'utf8')) || {} } catch { return {} }
 }
@@ -115,7 +116,7 @@ function updateStockfishStatus({ status, message }) {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1040, height: 720, minWidth: 720, minHeight: 480,
-    title: 'Chessist', backgroundColor: '#000000',
+    title: 'Chessing', backgroundColor: '#000000',
     icon: path.join(__dirname, '..', 'build', 'icon.png'),
     frame: false, titleBarStyle: 'hidden', autoHideMenuBar: true,
     webPreferences: {
@@ -253,7 +254,7 @@ function registerIpc() {
     if (!mainWindow || event.sender !== mainWindow.webContents) throw new Error('Open Setup to export diagnostics.')
     const date = new Date().toISOString().slice(0, 10)
     const { canceled, filePath } = await dialog.showSaveDialog(mainWindow, {
-      title: 'Export Chessist diagnostics', defaultPath: `chessist-diagnostics-${date}.json`,
+      title: 'Export Chessing diagnostics', defaultPath: `chessing-diagnostics-${date}.json`,
       filters: [{ name: 'JSON', extensions: ['json'] }],
     })
     if (canceled || !filePath) return { saved: false }
@@ -339,6 +340,7 @@ if (!app.requestSingleInstanceLock()) {
   })
 
   app.whenReady().then(async () => {
+    migrateLegacyUserData(app.getPath('appData'), app.getPath('userData'))
     await updater.clearInstallerCache()
     Menu.setApplicationMenu(null)
     registerIpc()

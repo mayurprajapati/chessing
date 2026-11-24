@@ -2,27 +2,29 @@
 
 ## [Unreleased]
 
-- Chess.com Auto-move no longer retries a move that already landed. Chessist checks the live board instead of waiting for its position refresh, which also stops it re-evaluating the previous position after every move.
-- Chess.com opponent moves are picked up about 0.3 seconds after they appear, instead of up to 2 seconds later. Chessist now follows the board when Chess.com replaces it after the page loads, and watches the current move list.
-- When a Chess.com game as Black starts before the board flips, Chessist switches to Black as soon as the board turns and no longer tries to move White's pieces.
-- If the board rejects the same Auto-move twice, Chessist waits for the position to change instead of retrying every second.
+- Chessist is now **Chessing**. On first start, Chessing copies your settings and the downloaded Stockfish from the old Chessist folder. Load the bundled extension again from **Setup → Browser extension**, since it is now a new extension.
+- Chessing reads the game's move list to work out castling rights on Chess.com and Lichess. If you castled, or your king or a rook moved and came back, the engine no longer suggests castling for that side.
+- Chess.com Auto-move no longer retries a move that already landed. Chessing checks the live board instead of waiting for its position refresh, which also stops it re-evaluating the previous position after every move.
+- Chess.com opponent moves are picked up about 0.3 seconds after they appear, instead of up to 2 seconds later. Chessing now follows the board when Chess.com replaces it after the page loads, and watches the current move list.
+- When a Chess.com game as Black starts before the board flips, Chessing switches to Black as soon as the board turns and no longer tries to move White's pieces.
+- If the board rejects the same Auto-move twice, Chessing waits for the position to change instead of retrying every second.
 - **Settings → Engine → Skill Level** explains that values below 20 make each search take longer.
 
 ## [3.0.4] — 2026-11-14
 
-- Fix a Lichess Instant move race where the mouse could release before the board registered the drag. Chessist waits for the piece to reach the destination and reports an input error if the drag does not settle.
+- Fix a Lichess Instant move race where the mouse could release before the board registered the drag. Chessing waits for the piece to reach the destination and reports an input error if the drag does not settle.
 - Show when Stockfish is restarting and display any error details it provides in **Setup**. Stop after three failed retries.
 - Record Stockfish failures and Lichess Auto-move timing with **Setup → Diagnostics**. Export a JSON file to share. Recording is off by default and may slightly increase latency while enabled.
 - Label the Evaluation footer **Last Auto-move attempt** so an earlier attempt is easy to distinguish from the current recommendation.
 
 ## [3.0.3] — 2026-11-14
 
-- Lichess Instant move rechecks queued moves when the turn indicator changes. Chessist verifies the current game, position, and turn before sending input and waits while a premove is active.
+- Lichess Instant move rechecks queued moves when the turn indicator changes. Chessing verifies the current game, position, and turn before sending input and waits while a premove is active.
 - The Evaluation page shows whether Auto-move is waiting for the browser board, the expected move appeared, the board stayed the same or changed unexpectedly, the board could not be verified, or the browser reported an input error.
 
 ## [3.0.2] — 2026-11-14
 
-- Run **Setup → Performance check** to measure the local Bun connection, Stockfish on offline positions, and sample desktop updates with Chessist in the foreground or background.
+- Run **Setup → Performance check** to measure the local Bun connection, Stockfish on offline positions, and sample desktop updates with Chessing in the foreground or background.
 - See median and 95th-percentile timings and sample counts. Use the Lichess lag check link to measure your connection to the site separately.
 
 ## [3.0.1] — 2026-11-14
@@ -34,7 +36,7 @@
 ## [3.0.0] — 2026-11-14
 
 - Introduce a redesigned title bar, sidebar, and Settings panel built on the reusable desktop UI template.
-- Use existing Chessist preferences for Game and Engine controls in the new Settings panel.
+- Use existing Chessing preferences for Game and Engine controls in the new Settings panel.
 - Build the desktop renderer with Bun.
 
 ## [2.1.1] — 2026-11-12
@@ -88,7 +90,7 @@ Thanks to [@ibadullaevrahil67-maker](https://github.com/ibadullaevrahil67-maker)
 
 ### Added
 
-- **Update & restart** in **About → Updates** for Windows installer builds. Chessist downloads and
+- **Update & restart** in **About → Updates** for Windows installer builds. Chessing downloads and
   verifies the matching stable installer from GitHub, then restarts after installation.
 - Download progress and retry feedback for in-app updates.
 
@@ -134,13 +136,13 @@ releases can be installed from the app.
 
 ### Changed
 - **Rebuilt as an Electron desktop app** (React + Vite) — owns Stockfish and the WebSocket server
-- **Overlay is now a slim C# helper** (`ChessistOverlay.exe`) driven by the desktop app over stdin — same transparent, screen-capture-invisible window
+- **Overlay is now a slim C# helper** (`ChessingOverlay.exe`) driven by the desktop app over stdin — same transparent, screen-capture-invisible window
 - **No setup.bat, no native messaging** — the app downloads Stockfish on first run; the extension is a pure WebSocket client
 - **Faster within a game** — one persistent Stockfish process with a large hash and multiple threads; the transposition table is reused across moves and reset only on a new game
 - **Settings live in the app** — a sidebar with Evaluation, Game, Engine, Setup, About; the app is the single settings authority and pushes settings to the extension over WS. The extension popup is now just a connectivity indicator, and its options page is gone
 - **Three render modes** — *Overlay* (transparent native window), *In-page* (drawn on the chess site), or *App* (the desktop window draws its own board + best-move arrows; nothing in the browser)
 - **Guided extension install** — the installer bundles the extension; the Setup tab reveals the folder and walks through loading it
-- **Bundled font + logo** — Instrument Sans as the app font; Chessist logo for the window/installer icon, title bar, and About
+- **Bundled font + logo** — Instrument Sans as the app font; Chessing logo for the window/installer icon, title bar, and About
 - **Repo reorganized** — Electron app at root, browser extension under `extension/`, overlay under `overlay/`
 - Removed the C# engine, native-messaging host, and WASM remnants
 
@@ -150,11 +152,11 @@ releases can be installed from the app.
 
 ### Changed
 - **Lean repo** — compiled binaries removed from git; repo is now ~4 MB instead of ~170 MB
-- **GitHub Actions CI** — tagged releases (`v*.*.*`) build and publish `chessist-engine-windows.zip`
-- **setup.bat downloads binaries** — `ChessistEngine.exe` and `stockfish.exe` are fetched from GitHub releases on first run (skipped if already present)
-- **Auto-download Stockfish** — `ChessistEngine.exe` re-fetches Stockfish automatically if missing, with download progress broadcast over WebSocket
+- **GitHub Actions CI** — tagged releases (`v*.*.*`) build and publish `chessing-engine-windows.zip`
+- **setup.bat downloads binaries** — `ChessingEngine.exe` and `stockfish.exe` are fetched from GitHub releases on first run (skipped if already present)
+- **Auto-download Stockfish** — `ChessingEngine.exe` re-fetches Stockfish automatically if missing, with download progress broadcast over WebSocket
 - **Extension detection** — the engine detects when the Chrome extension is connected (via an `identify` message)
-- **Eldritch theme** — the status panel adopts a flat pitch-black aesthetic with the Chessist purple (`#792A9E`) accent
+- **Eldritch theme** — the status panel adopts a flat pitch-black aesthetic with the Chessing purple (`#792A9E`) accent
 - **BootstrapGate** — the status panel shows a setup checklist (engine → Stockfish → extension) until everything is ready
 
 ---
@@ -162,22 +164,22 @@ releases can be installed from the app.
 ## [1.3.1] — 2026-06-08
 
 ### Changed
-- **Removed WASM engine** — `ChessistEngine.exe` (native Stockfish) is now the sole analysis engine; no WASM fallback
-- **Removed Python dependency** — `ChessistEngine.exe` now acts as its own native-messaging host (HostBridge mode)
+- **Removed WASM engine** — `ChessingEngine.exe` (native Stockfish) is now the sole analysis engine; no WASM fallback
+- **Removed Python dependency** — `ChessingEngine.exe` now acts as its own native-messaging host (HostBridge mode)
 - **Bundled Stockfish** — `stockfish.exe` is included; no separate install required
 - **Zero-prompt setup** — `setup.bat` requires no user input; extension ID is pinned via manifest key
 - **React+Vite status panel** — tray icon → "Open Panel" shows live engine status, eval depth, score, and NPS
 - Repo reorganized: `overlay/` → `engine/`, `native-host/` → `host/`, dev scripts → `scripts/`
-- `ChessistEngine.exe` prevents duplicate instances via named mutex
+- `ChessingEngine.exe` prevents duplicate instances via named mutex
 
 ---
 
-## v1.3.0 — Chessist Engine
+## v1.3.0 — Chessing Engine
 
 ### Added
-- **Chessist Engine** — native C# engine host replaces Python native messaging; run `ChessistEngine.exe` and Stockfish analysis streams directly to the extension over WebSocket with no Python dependency
+- **Chessing Engine** — native C# engine host replaces Python native messaging; run `ChessingEngine.exe` and Stockfish analysis streams directly to the extension over WebSocket with no Python dependency
 - **Always-on WebSocket engine connection** — content scripts connect to the engine on page load regardless of overlay mode; no manual engine-source switching required
-- **WASM fallback** — extension automatically falls back to the built-in WASM Stockfish when ChessistEngine.exe is not running; no configuration needed
+- **WASM fallback** — extension automatically falls back to the built-in WASM Stockfish when ChessingEngine.exe is not running; no configuration needed
 - **Bidirectional eval protocol** — same WebSocket connection used for overlay display and engine eval requests; engine streams multi-PV results back as JSON `eval` messages
 - **Engine status indicator** — popup shows live engine connection state (connected / not running)
 
@@ -187,7 +189,7 @@ releases can be installed from the app.
 - `setup.bat` no longer requires Python, pip, or extension ID for native messaging registration
 
 ### Changed
-- `setup.bat` simplified — only checks for Stockfish and optionally adds ChessistEngine.exe to Windows startup
+- `setup.bat` simplified — only checks for Stockfish and optionally adds ChessingEngine.exe to Windows startup
 
 ---
 
@@ -212,11 +214,11 @@ releases can be installed from the app.
 - **Overlay hiding when extension popup opens** — `window.blur` fired whenever the popup opened, sending `visible: false`; replaced with `visibilitychange` which only fires on actual tab switches and minimises
 - **Overlay hiding on alt-tab** — added `GetForegroundWindow()` check in the C# render loop; overlay blanks only when a non-browser window is foreground
 - **Debug mode overlay blank** — `AllocConsole()` window (owned by the overlay process) caused `IsActualBrowser()` to return false; added `_selfPid` check to whitelist the overlay's own windows
-- **"View Logs" opening a hidden log window** — replaced the in-process `LogWindow` form with file-based logging (`ChessistOverlay.log`) opened in the system default text editor
+- **"View Logs" opening a hidden log window** — replaced the in-process `LogWindow` form with file-based logging (`ChessingOverlay.log`) opened in the system default text editor
 
 ### Added
 - **Debug Mode toggle** — sub-option under Overlay Mode; restarts the overlay exe with `-debug` flag, showing a console window for live troubleshooting
-- **Always-on file logging** — overlay writes a timestamped log to `ChessistOverlay.log` in all modes (not just debug)
+- **Always-on file logging** — overlay writes a timestamped log to `ChessingOverlay.log` in all modes (not just debug)
 
 ---
 

@@ -21,7 +21,7 @@ function pickWindowsAsset(assets, arch = process.arch) {
 
 function getResponse(url, redirects = 5) {
   return new Promise((resolve, reject) => {
-    const request = https.get(url, { headers: { 'User-Agent': 'Chessist/2.0' } }, (res) => {
+    const request = https.get(url, { headers: { 'User-Agent': 'Chessing/2.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.destroy()
         if (!redirects) return reject(new Error('Too many redirects while downloading Stockfish'))
@@ -85,7 +85,7 @@ async function ensureStockfish(userDataDir, onStatus) {
   const url = pickWindowsAsset(release.assets || [])
   if (!url) throw new Error(`No Windows Stockfish build for ${process.arch}`)
 
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chessist-stockfish-'))
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'chessing-stockfish-'))
   try {
     const tmpZip = path.join(tmpDir, 'stockfish.zip')
     await download(url, tmpZip, pct => onStatus?.({ status: 'downloading', message: `Stockfish: ${pct}%` }))

@@ -29,7 +29,7 @@ let diagnosticsEnabled = false
 let diagnosticWindow = 0
 let diagnosticCount = 0
 
-const BENCHMARK_BOARD_ERROR = 'Close chess boards connected to Chessist before running the Stockfish benchmark.'
+const BENCHMARK_BOARD_ERROR = 'Close chess boards connected to Chessing before running the Stockfish benchmark.'
 
 function runBenchmark({ requestId, path }) {
   if (contentClients.size || benchmark) {
@@ -327,7 +327,7 @@ async function stop(code = 0) {
   process.stdin.pause()
   process.exitCode = code
   for (const server of servers) server.stop(true)
-  try { await stopEngines('Chessist is shutting down.') } catch { process.exitCode = 1 }
+  try { await stopEngines('Chessing is shutting down.') } catch { process.exitCode = 1 }
 }
 
 process.stdin.on('error', () => stop(1))

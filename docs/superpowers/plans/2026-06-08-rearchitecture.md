@@ -1,10 +1,10 @@
-# Chessist Rearchitecture Implementation Plan
+# Chessing Rearchitecture Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Remove WASM engine, remove Python launcher, pin extension ID for zero-prompt install, add HostBridge mode to ChessistEngine.exe, migrate settings UI to React+Vite panel in WebView2, and reorganize the repo.
+**Goal:** Remove WASM engine, remove Python launcher, pin extension ID for zero-prompt install, add HostBridge mode to ChessingEngine.exe, migrate settings UI to React+Vite panel in WebView2, and reorganize the repo.
 
-**Architecture:** Browser extension becomes a thin FEN-detection + auto-move bridge; ChessistEngine.exe is the sole engine (Stockfish) and also hosts a React+Vite status panel via WebView2; a named mutex prevents duplicate instances; the exe doubles as its own native-messaging host (HostBridge mode, detecting the `chrome-extension://` origin arg Chrome passes).
+**Architecture:** Browser extension becomes a thin FEN-detection + auto-move bridge; ChessingEngine.exe is the sole engine (Stockfish) and also hosts a React+Vite status panel via WebView2; a named mutex prevents duplicate instances; the exe doubles as its own native-messaging host (HostBridge mode, detecting the `chrome-extension://` origin arg Chrome passes).
 
 **Tech Stack:** JS/Chrome MV3 extension, C# .NET 4.8 WinForms, WebView2, React 18 + TypeScript + Vite, Stockfish UCI.
 
@@ -20,16 +20,16 @@
 | DELETE | `native-host/stockfish_host.py`, `native-host/stockfish_host.bat` |
 | DELETE | `src/engine/`, `src/offscreen/` |
 | MOVE | `overlay/` → `engine/` |
-| MOVE (rename) | `engine/ChessistOverlay.csproj` → `engine/ChessistEngine.csproj` |
+| MOVE (rename) | `engine/ChessingOverlay.csproj` → `engine/ChessingEngine.csproj` |
 | MOVE | `native-host/` → `host/` (keep only json manifest) |
 | MOVE | `dev/rebuild.bat`, `dev/start_debug.bat` + `start.bat` → `scripts/` |
-| CREATE | `host/com.chessist.engine.json` |
+| CREATE | `host/com.chessing.engine.json` |
 | CREATE | `ui/` (React+Vite app) |
 | MODIFY | `manifest.json` — add `key`, remove offscreen permission + dead resources |
 | MODIFY | `setup.bat` — fully non-interactive |
-| MODIFY | `Chessist.sln` — updated project path |
+| MODIFY | `Chessing.sln` — updated project path |
 | MODIFY | `engine/Program.cs` — HostBridge, mutex, SettingsForm, StockfishManager cleanup |
-| MODIFY | `engine/ChessistEngine.csproj` — add WebView2 NuGet |
+| MODIFY | `engine/ChessingEngine.csproj` — add WebView2 NuGet |
 | MODIFY | `src/background/service-worker.js` — remove WASM, add auto-launch |
 | MODIFY | `src/content/content.js` — WS-only eval, settings relay |
 | MODIFY | `src/content/lichess.js` — same |
@@ -48,14 +48,14 @@
 - [ ] **Step 1: Remove dead files from tracking and disk**
 
 ```powershell
-cd "c:\Users\luri\Documents\Programming\Chessist"
+cd "c:\Users\luri\Documents\Programming\Chessing"
 git rm logo.png INSTANT_MOVE_FEATURE.md
 git rm native-host/stockfish_host.py native-host/stockfish_host.bat
 # stop tracking binary junk (keep exe + exe.config + stockfish.exe)
-git rm --cached overlay/bin/Release/net48/ChessistEngine.pdb
-git rm --cached overlay/bin/Release/net48/ChessistEngine.ini
-git rm --cached overlay/bin/Release/net48/ChessistOverlay.ini
-git rm --cached overlay/bin/Release/net48/ChessistOverlay.log
+git rm --cached overlay/bin/Release/net48/ChessingEngine.pdb
+git rm --cached overlay/bin/Release/net48/ChessingEngine.ini
+git rm --cached overlay/bin/Release/net48/ChessingOverlay.ini
+git rm --cached overlay/bin/Release/net48/ChessingOverlay.log
 ```
 
 - [ ] **Step 2: Update .gitignore**
@@ -95,7 +95,7 @@ git commit -m "chore: delete dead files and stop tracking binary junk"
 - Move: `overlay/` → `engine/`, rename csproj
 - Move: `native-host/` → `host/` (only the json)
 - Create: `scripts/` directory; move `dev/*.bat` + `start.bat`
-- Modify: `Chessist.sln`
+- Modify: `Chessing.sln`
 
 - [ ] **Step 1: Move and rename directories**
 
@@ -110,12 +110,12 @@ Wait — git already tracks `overlay/`. Use git mv:
 
 ```powershell
 # git mv doesn't handle directory rename easily; do it file by file
-git mv overlay/ChessistOverlay.csproj engine/ChessistEngine.csproj
+git mv overlay/ChessingOverlay.csproj engine/ChessingEngine.csproj
 git mv overlay/Program.cs engine/Program.cs
 git mv overlay/app.manifest engine/app.manifest
 # Move the bin/Release directory (prebuilt exe)
-git mv "overlay/bin/Release/net48/ChessistEngine.exe" "engine/bin/Release/net48/ChessistEngine.exe"
-git mv "overlay/bin/Release/net48/ChessistEngine.exe.config" "engine/bin/Release/net48/ChessistEngine.exe.config"
+git mv "overlay/bin/Release/net48/ChessingEngine.exe" "engine/bin/Release/net48/ChessingEngine.exe"
+git mv "overlay/bin/Release/net48/ChessingEngine.exe.config" "engine/bin/Release/net48/ChessingEngine.exe.config"
 ```
 
 - [ ] **Step 2: Move native-host → host**
@@ -140,7 +140,7 @@ git rm -r --cached dev 2>$null
 
 - [ ] **Step 4: Update scripts/start.bat to point to new exe path**
 
-Open `scripts/start.bat` and change any `overlay\bin\Release\net48\ChessistEngine.exe` reference to `engine\bin\Release\net48\ChessistEngine.exe`. Read the file first:
+Open `scripts/start.bat` and change any `overlay\bin\Release\net48\ChessingEngine.exe` reference to `engine\bin\Release\net48\ChessingEngine.exe`. Read the file first:
 
 ```
 (read scripts/start.bat and update the path)
@@ -148,18 +148,18 @@ Open `scripts/start.bat` and change any `overlay\bin\Release\net48\ChessistEngin
 
 - [ ] **Step 5: Update scripts/rebuild.bat**
 
-Read `scripts/rebuild.bat` and update any `overlay\ChessistOverlay.csproj` → `engine\ChessistEngine.csproj`.
+Read `scripts/rebuild.bat` and update any `overlay\ChessingOverlay.csproj` → `engine\ChessingEngine.csproj`.
 
-- [ ] **Step 6: Update Chessist.sln**
+- [ ] **Step 6: Update Chessing.sln**
 
-Replace the full content of `Chessist.sln` with:
+Replace the full content of `Chessing.sln` with:
 
 ```
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessistEngine", "engine\ChessistEngine.csproj", "{091F64DF-B2B9-F0BA-EAC8-AF06C470B3A5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChessingEngine", "engine\ChessingEngine.csproj", "{091F64DF-B2B9-F0BA-EAC8-AF06C470B3A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -181,15 +181,15 @@ Global
 EndGlobal
 ```
 
-- [ ] **Step 7: Update engine/ChessistEngine.csproj — fix OutputPath and ApplicationManifest**
+- [ ] **Step 7: Update engine/ChessingEngine.csproj — fix OutputPath and ApplicationManifest**
 
-The csproj `ApplicationManifest` still says `app.manifest` (relative, fine). The `AssemblyName` is already `ChessistEngine`. No changes needed beyond what the file mv already did.
+The csproj `ApplicationManifest` still says `app.manifest` (relative, fine). The `AssemblyName` is already `ChessingEngine`. No changes needed beyond what the file mv already did.
 
 Verify:
 ```powershell
-Get-Content engine/ChessistEngine.csproj
+Get-Content engine/ChessingEngine.csproj
 ```
-Expected: `AssemblyName` = `ChessistEngine`, `ApplicationManifest` = `app.manifest`.
+Expected: `AssemblyName` = `ChessingEngine`, `ApplicationManifest` = `app.manifest`.
 
 - [ ] **Step 8: Commit**
 
@@ -212,7 +212,7 @@ In `manifest.json`, add the `"key"` field as the second line (after the opening 
 ```json
 {
   "manifest_version": 3,
-  "name": "Chessist",
+  "name": "Chessing",
   "version": "1.3.0",
   "key": "MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQEAxHFGKPG8F8bVYHOvHJuXrzzoulC8atmS0+o8G0jhzTktpblVSKcj5Ol9fByVw2PKgTdEuIT8CrkQIIZIC89fr7gyRk9KqALefvtETUuDIHZsp53jxqT54DIwrjafaCgpOOaQezVZYw2YVJP7aA+nQPFRvyfizrKxtOrcYMSckHEYQ8FA/BfEmGRcTUdGqRihXSMpXZc62BAFD8/TZzLW+6tRKvRI6o0sOjxHLlqOzXQ2CyfTjvF9Erl3Xuzr2xFeHcK+3JpnELHEk6BEVbC/40w7JLMzGXREhszcHRMQxYSnk4QKydDEYNPDUyNM+7Xc1cgqraqNhTwgQCPJ0lvZkQICAQE=",
   "description": "Live chess evaluation bar for Chess.com and Lichess - powered by Stockfish. Created by imluri.",
@@ -246,24 +246,24 @@ git commit -m "feat: pin extension ID via manifest key"
 ```bat
 @echo off
 setlocal EnableDelayedExpansion
-title Chessist Setup
+title Chessing Setup
 
 set "ROOT=%~dp0"
 if "%ROOT:~-1%"=="\" set "ROOT=%ROOT:~0,-1%"
 
-set "EXE=%ROOT%\engine\bin\Release\net48\ChessistEngine.exe"
+set "EXE=%ROOT%\engine\bin\Release\net48\ChessingEngine.exe"
 set "HOST_DIR=%ROOT%\host"
-set "MANIFEST=%HOST_DIR%\com.chessist.engine.json"
+set "MANIFEST=%HOST_DIR%\com.chessing.engine.json"
 
 echo.
-echo  === Chessist Setup ===
+echo  === Chessing Setup ===
 echo.
 
 :: ── Write native-messaging manifest ───────────────────────────────────────────
 (
 echo {
-echo   "name": "com.chessist.engine",
-echo   "description": "Chessist - Engine Launcher",
+echo   "name": "com.chessing.engine",
+echo   "description": "Chessing - Engine Launcher",
 echo   "path": "%EXE:\=\\%",
 echo   "type": "stdio",
 echo   "allowed_origins": [
@@ -273,9 +273,9 @@ echo }
 ) > "!MANIFEST!"
 
 :: ── Register for Chrome, Brave, Edge ──────────────────────────────────────────
-reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessist.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
-reg add "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.chessist.engine" /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
-reg add "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.chessist.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessing.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.chessing.engine" /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
+reg add "HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.chessing.engine"             /ve /t REG_SZ /d "!MANIFEST!" /f >nul 2>&1
 
 :: ── Clean up old native host registration (com.chess.live.eval) ───────────────
 reg delete "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chess.live.eval"             /f >nul 2>&1
@@ -283,8 +283,8 @@ reg delete "HKCU\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.c
 
 :: ── Optional: add engine to Windows startup ───────────────────────────────────
 if /i "%1"=="--startup" (
-    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "ChessistEngine" /t REG_SZ /d "\"!EXE!\"" /f >nul 2>&1
-    echo  Added ChessistEngine to Windows startup.
+    reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "ChessingEngine" /t REG_SZ /d "\"!EXE!\"" /f >nul 2>&1
+    echo  Added ChessingEngine to Windows startup.
 )
 
 echo  Registered native host for Chrome, Brave, and Edge.
@@ -302,17 +302,17 @@ cmd /c setup.bat
 
 Expected output:
 ```
-=== Chessist Setup ===
+=== Chessing Setup ===
 Registered native host for Chrome, Brave, and Edge.
 Done. Reload the extension in chrome://extensions and open a game.
 ```
 
 Verify manifest written:
 ```powershell
-Get-Content host/com.chessist.engine.json
+Get-Content host/com.chessing.engine.json
 ```
 
-Expected: JSON with absolute path to ChessistEngine.exe and the pinned extension ID.
+Expected: JSON with absolute path to ChessingEngine.exe and the pinned extension ID.
 
 - [ ] **Step 3: Commit**
 
@@ -323,21 +323,21 @@ git commit -m "feat: rewrite setup.bat — zero prompts, no Python required"
 
 ---
 
-## Task 5: Create host/com.chessist.engine.json + remove old manifest
+## Task 5: Create host/com.chessing.engine.json + remove old manifest
 
 **Files:**
-- Create: `host/com.chessist.engine.json` (template; setup.bat writes the real one with absolute path)
+- Create: `host/com.chessing.engine.json` (template; setup.bat writes the real one with absolute path)
 - Delete: `host/com.chess.live.eval.json`
 
 - [ ] **Step 1: Write the template manifest**
 
-Create `host/com.chessist.engine.json` as a template committed to the repo. setup.bat overwrites it with the real absolute path at install time:
+Create `host/com.chessing.engine.json` as a template committed to the repo. setup.bat overwrites it with the real absolute path at install time:
 
 ```json
 {
-  "name": "com.chessist.engine",
-  "description": "Chessist - Engine Launcher",
-  "path": "REPLACE_WITH_ABSOLUTE_PATH_TO_ChessistEngine.exe",
+  "name": "com.chessing.engine",
+  "description": "Chessing - Engine Launcher",
+  "path": "REPLACE_WITH_ABSOLUTE_PATH_TO_ChessingEngine.exe",
   "type": "stdio",
   "allowed_origins": [
     "chrome-extension://oecfgiflfobnbajnpanbpjnnkgdhiifb/"
@@ -354,8 +354,8 @@ git rm host/com.chess.live.eval.json
 - [ ] **Step 3: Commit**
 
 ```powershell
-git add host/com.chessist.engine.json
-git commit -m "chore: replace com.chess.live.eval host manifest with com.chessist.engine"
+git add host/com.chessing.engine.json
+git commit -m "chore: replace com.chess.live.eval host manifest with com.chessing.engine"
 ```
 
 ---
@@ -410,8 +410,8 @@ git commit -m "feat: remove offscreen permission and WASM resources from manifes
 The new file removes all WASM/offscreen machinery and adds auto-launch. Write the complete replacement:
 
 ```javascript
-// Chessist - Service Worker
-// Coordinates content script ↔ ChessistEngine.exe (native Stockfish over WebSocket)
+// Chessing - Service Worker
+// Coordinates content script ↔ ChessingEngine.exe (native Stockfish over WebSocket)
 
 let lastEvaluation = null;
 
@@ -421,13 +421,13 @@ let nativePort = null;
 function connectNative() {
   if (nativePort) return;
   try {
-    nativePort = chrome.runtime.connectNative('com.chessist.engine');
+    nativePort = chrome.runtime.connectNative('com.chessing.engine');
     nativePort.onMessage.addListener((msg) => {
       // launch_result etc. — no-op for now
     });
     nativePort.onDisconnect.addListener(() => { nativePort = null; });
   } catch (e) {
-    console.log('Chessist SW: native host not available:', e.message);
+    console.log('Chessing SW: native host not available:', e.message);
   }
 }
 
@@ -613,7 +613,7 @@ async function broadcastToContentScripts(message) {
     );
     chrome.runtime.sendMessage(message).catch(() => {});
   } catch (e) {
-    console.error('Chessist SW: broadcast error:', e);
+    console.error('Chessing SW: broadcast error:', e);
   }
 }
 ```
@@ -622,7 +622,7 @@ async function broadcastToContentScripts(message) {
 
 Load the extension in Chrome (`chrome://extensions` → reload). Check the service worker background page for errors.
 
-Expected: no errors, "Chessist" extension loads without warnings.
+Expected: no errors, "Chessing" extension loads without warnings.
 
 - [ ] **Step 3: Commit**
 
@@ -667,14 +667,14 @@ Add a `showEngineStartingMessage` function near the existing `showRefreshMessage
 ```javascript
   function showEngineStartingMessage() {
     // Reuse or create a subtle status indicator
-    let el = document.getElementById('chessist-engine-status');
+    let el = document.getElementById('chessing-engine-status');
     if (!el) {
       el = document.createElement('div');
-      el.id = 'chessist-engine-status';
+      el.id = 'chessing-engine-status';
       el.style.cssText = 'position:fixed;bottom:12px;right:12px;background:rgba(0,0,0,.75);color:#fff;font:12px/1.4 sans-serif;padding:6px 10px;border-radius:6px;z-index:99999;pointer-events:none';
       document.body.appendChild(el);
     }
-    el.textContent = '⌛ Chessist: starting engine…';
+    el.textContent = '⌛ Chessing: starting engine…';
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
@@ -815,7 +815,7 @@ git commit -m "feat: lichess.js — WS-only eval, remove WASM fallback, add sett
 Find and replace the engine section description text. Replace:
 
 ```html
-<p class="engine-desc-hint">Run <strong>ChessistEngine.exe</strong> for native Stockfish. Falls back to built-in WASM engine when not running.</p>
+<p class="engine-desc-hint">Run <strong>ChessingEngine.exe</strong> for native Stockfish. Falls back to built-in WASM engine when not running.</p>
 ```
 
 With:
@@ -834,7 +834,7 @@ Find the "Force Restart Engine" button:
 Replace with:
 
 ```html
-<button type="button" id="forceRestartBtn" class="force-restart-btn" title="Restart ChessistEngine.exe">
+<button type="button" id="forceRestartBtn" class="force-restart-btn" title="Restart ChessingEngine.exe">
   Restart Engine
 ```
 
@@ -920,7 +920,7 @@ Find the `static void Main(string[] args)` block (currently around line 1147) an
 
             // Prevent duplicate normal-mode instances
             bool createdNew;
-            var mutex = new Mutex(true, "ChessistEngineInstance", out createdNew);
+            var mutex = new Mutex(true, "ChessingEngineInstance", out createdNew);
             if (!createdNew) { mutex.Dispose(); return; }
 
             bool debug = Array.Exists(args, a => a.Equals("-debug", StringComparison.OrdinalIgnoreCase));
@@ -953,7 +953,7 @@ Insert the following class just before `static class Program` (i.e., between the
 
 ```csharp
     // ── Native-messaging host bridge ──────────────────────────────────────────────
-    // When Chrome launches ChessistEngine.exe as a native-messaging host it passes
+    // When Chrome launches ChessingEngine.exe as a native-messaging host it passes
     // the calling extension's origin (chrome-extension://ID/) as an argument.
     // In that mode we skip all UI and run the stdio JSON loop instead.
 
@@ -994,7 +994,7 @@ Insert the following class just before `static class Program` (i.e., between the
         static bool IsRunning()
         {
             Mutex? m = null;
-            try   { return Mutex.TryOpenExisting("ChessistEngineInstance", out m); }
+            try   { return Mutex.TryOpenExisting("ChessingEngineInstance", out m); }
             catch { return false; }
             finally { m?.Dispose(); }
         }
@@ -1028,7 +1028,7 @@ Insert the following class just before `static class Program` (i.e., between the
         static void Kill()
         {
             int self = Process.GetCurrentProcess().Id;
-            foreach (var p in Process.GetProcessesByName("ChessistEngine"))
+            foreach (var p in Process.GetProcessesByName("ChessingEngine"))
             {
                 try { if (p.Id != self) p.Kill(); } catch { }
                 p.Dispose();
@@ -1081,7 +1081,7 @@ static readonly string[] _sfCandidates =
 - [ ] **Step 4: Build and verify**
 
 ```powershell
-dotnet build engine/ChessistEngine.csproj -c Release
+dotnet build engine/ChessingEngine.csproj -c Release
 ```
 
 Expected: Build succeeded, 0 errors.
@@ -1090,7 +1090,7 @@ Expected: Build succeeded, 0 errors.
 
 ```powershell
 # Simulate Chrome calling the host bridge
-$psi = [System.Diagnostics.ProcessStartInfo]::new("engine/bin/Release/net48/ChessistEngine.exe")
+$psi = [System.Diagnostics.ProcessStartInfo]::new("engine/bin/Release/net48/ChessingEngine.exe")
 $psi.Arguments = "chrome-extension://oecfgiflfobnbajnpanbpjnnkgdhiifb/"
 $psi.UseShellExecute = $false
 $psi.RedirectStandardInput = $true
@@ -1120,7 +1120,7 @@ Expected: `{"type":"launch_result","success":true}` (or `already_running:true` i
 
 ```powershell
 git add engine/Program.cs
-git commit -m "feat: add HostBridge mode + named mutex to ChessistEngine.exe"
+git commit -m "feat: add HostBridge mode + named mutex to ChessingEngine.exe"
 ```
 
 ---
@@ -1128,22 +1128,22 @@ git commit -m "feat: add HostBridge mode + named mutex to ChessistEngine.exe"
 ## Task 13: Add WebView2 NuGet + SettingsForm
 
 **Files:**
-- Modify: `engine/ChessistEngine.csproj`
+- Modify: `engine/ChessingEngine.csproj`
 - Modify: `engine/Program.cs`
 
 This adds a floating React panel window accessible from the system tray.
 
 - [ ] **Step 1: Add WebView2 NuGet package**
 
-Replace `engine/ChessistEngine.csproj` with:
+Replace `engine/ChessingEngine.csproj` with:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
-    <AssemblyName>ChessistEngine</AssemblyName>
-    <RootNamespace>ChessistEngine</RootNamespace>
+    <AssemblyName>ChessingEngine</AssemblyName>
+    <RootNamespace>ChessingEngine</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Optimize>true</Optimize>
@@ -1174,7 +1174,7 @@ Insert the following class just before the `HostBridge` class (or after `TrayApp
 
         public SettingsForm()
         {
-            Text            = "Chessist Panel";
+            Text            = "Chessing Panel";
             Width           = 420;
             Height          = 520;
             FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -1198,7 +1198,7 @@ Insert the following class just before the `HostBridge` class (or after `TrayApp
                 {
                     MessageBox.Show(
                         "WebView2 runtime not found.\nDownload: https://developer.microsoft.com/microsoft-edge/webview2/",
-                        "Chessist", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        "Chessing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
                 _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
@@ -1210,15 +1210,15 @@ Insert the following class just before the `HostBridge` class (or after `TrayApp
                 if (Directory.Exists(uiPath))
                 {
                     _webView.CoreWebView2.SetVirtualHostNameToFolderMapping(
-                        "chessist.local", uiPath,
+                        "chessing.local", uiPath,
                         Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
-                    _webView.CoreWebView2.Navigate("https://chessist.local/index.html");
+                    _webView.CoreWebView2.Navigate("https://chessing.local/index.html");
                 }
                 else
                 {
                     _webView.CoreWebView2.NavigateToString(
                         "<html><body style='font-family:sans-serif;padding:20px'>" +
-                        "<h2>Chessist Panel</h2>" +
+                        "<h2>Chessing Panel</h2>" +
                         "<p>UI not built yet. Run: <code>cd ui &amp;&amp; npm run build</code> then copy dist/ to engine/bin/Release/net48/ui/</p>" +
                         "</body></html>");
                 }
@@ -1271,7 +1271,7 @@ SettingsForm? _settingsForm;
 - [ ] **Step 4: Build**
 
 ```powershell
-dotnet build engine/ChessistEngine.csproj -c Release
+dotnet build engine/ChessingEngine.csproj -c Release
 ```
 
 Expected: Build succeeded. If NuGet restore fails, run `dotnet restore` first.
@@ -1279,7 +1279,7 @@ Expected: Build succeeded. If NuGet restore fails, run `dotnet restore` first.
 - [ ] **Step 5: Commit**
 
 ```powershell
-git add engine/ChessistEngine.csproj engine/Program.cs
+git add engine/ChessingEngine.csproj engine/Program.cs
 git commit -m "feat: add WebView2 SettingsForm + wire to tray menu"
 ```
 
@@ -1300,7 +1300,7 @@ git commit -m "feat: add WebView2 SettingsForm + wire to tray menu"
 
 ```json
 {
-  "name": "chessist-ui",
+  "name": "chessing-ui",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -1363,7 +1363,7 @@ export default defineConfig({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chessist</title>
+  <title>Chessing</title>
 </head>
 <body>
   <div id="root"></div>
@@ -1485,7 +1485,7 @@ export default function App() {
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: 16, minHeight: '100vh', background: '#1e1e1e', color: '#e0e0e0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <div style={{ width: 10, height: 10, borderRadius: '50%', background: statusColor }} />
-        <span style={{ fontWeight: 600 }}>Chessist Engine</span>
+        <span style={{ fontWeight: 600 }}>Chessing Engine</span>
         <span style={{ marginLeft: 'auto', fontSize: 12, color: '#888' }}>{statusLabel}</span>
       </div>
 
@@ -1608,10 +1608,10 @@ Expected: completes silently, no prompts.
 - [ ] **Step 2: Verify registry entry**
 
 ```powershell
-reg query "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessist.engine"
+reg query "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.chessing.engine"
 ```
 
-Expected: value points to `host/com.chessist.engine.json`.
+Expected: value points to `host/com.chessing.engine.json`.
 
 - [ ] **Step 3: Load extension in Chrome**
 
@@ -1623,8 +1623,8 @@ Expected: value points to `host/com.chessist.engine.json`.
 - [ ] **Step 4: Open chess.com — verify engine auto-launches**
 
 1. Open `https://www.chess.com/play/online`
-2. Within ~3 seconds, the extension's service worker should launch ChessistEngine.exe
-3. Check Task Manager: `ChessistEngine.exe` appears, `stockfish.exe` appears as child process
+2. Within ~3 seconds, the extension's service worker should launch ChessingEngine.exe
+3. Check Task Manager: `ChessingEngine.exe` appears, `stockfish.exe` appears as child process
 4. The extension popup shows engine status "Connected"
 
 - [ ] **Step 5: Verify eval works**
@@ -1633,7 +1633,7 @@ Make a move on chess.com. The evaluation bar should update. Open DevTools consol
 
 - [ ] **Step 6: Test Restart Engine button**
 
-In the popup, click "Restart Engine". ChessistEngine.exe should stop and restart. Eval should resume within ~3 seconds.
+In the popup, click "Restart Engine". ChessingEngine.exe should stop and restart. Eval should resume within ~3 seconds.
 
 - [ ] **Step 7: Open the React panel**
 
@@ -1654,7 +1654,7 @@ Right-click the system tray icon → "Open Panel". The SettingsForm should appea
 Replace the `Project Structure` section with the new layout:
 
 ```
-Chessist/
+Chessing/
 ├── setup.bat               # First-time setup (run once)
 ├── manifest.json
 ├── src/
@@ -1662,11 +1662,11 @@ Chessist/
 │   ├── background/         # Service worker (engine launcher)
 │   ├── popup/              # Extension popup
 │   └── options/
-├── engine/                 # ChessistEngine.exe source
-│   ├── ChessistEngine.csproj
+├── engine/                 # ChessingEngine.exe source
+│   ├── ChessingEngine.csproj
 │   ├── Program.cs
 │   └── bin/Release/net48/
-│        ├── ChessistEngine.exe  # Native engine + overlay + WebSocket server
+│        ├── ChessingEngine.exe  # Native engine + overlay + WebSocket server
 │        ├── stockfish.exe       # Bundled Stockfish
 │        └── ui/                 # Built React status panel
 ├── host/                   # Native messaging host manifest
@@ -1688,7 +1688,7 @@ git clone https://github.com/imluri/Chessist.git
 ### 2. Load the extension
 1. Open chrome://extensions (or brave://extensions)
 2. Enable Developer mode (toggle, top right)
-3. Click Load unpacked → select the Chessist folder
+3. Click Load unpacked → select the Chessing folder
 
 ### 3. Run setup (once)
 Double-click setup.bat — no prompts, takes ~2 seconds.
@@ -1713,8 +1713,8 @@ Add at the top of CHANGELOG.md:
 ## [1.3.1] — 2026-06-08
 
 ### Changed
-- **Removed WASM engine** — ChessistEngine.exe (native Stockfish) is now the sole analysis engine
-- **Removed Python dependency** — ChessistEngine.exe now acts as its own native-messaging host
+- **Removed WASM engine** — ChessingEngine.exe (native Stockfish) is now the sole analysis engine
+- **Removed Python dependency** — ChessingEngine.exe now acts as its own native-messaging host
 - **Bundled Stockfish** — no separate Stockfish install required
 - **Zero-prompt setup** — setup.bat requires no user input (extension ID is pinned)
 - **React+Vite status panel** — tray icon → Open Panel shows engine status and live eval

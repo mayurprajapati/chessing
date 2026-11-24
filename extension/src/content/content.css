@@ -1,6 +1,6 @@
-/* Chessist - Evaluation Bar Styles */
+/* Chessing - Evaluation Bar Styles */
 
-#chessist-fair-play-notice {
+#chessing-fair-play-notice {
   position: fixed;
   right: 12px;
   bottom: 44px;
@@ -15,7 +15,7 @@
   font: 13px/1.45 'Segoe UI', sans-serif;
 }
 
-#chessist-fair-play-notice a {
+#chessing-fair-play-notice a {
   color: #ffd784;
   text-decoration: underline;
 }

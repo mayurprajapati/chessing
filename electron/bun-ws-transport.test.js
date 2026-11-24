@@ -49,7 +49,7 @@ async function startWithUciFixture() {
   // The engine launches its binary without arguments. Preload a fake UCI
   // implementation into our existing Node executable to exercise the real
   // pipes without downloading Stockfish or compiling a fixture executable.
-  engineFixture = await mkdtemp(join(tmpdir(), 'chessist-uci-'))
+  engineFixture = await mkdtemp(join(tmpdir(), 'chessing-uci-'))
   const filename = join(engineFixture, 'fixture.cjs')
   await writeFile(filename, `
     if (!process.versions.bun && process.argv.length === 1) {

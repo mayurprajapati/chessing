@@ -9,17 +9,17 @@
 ## Goals
 
 1. **Lean repo** — remove all compiled binaries from git. Clone is ~4 MB instead of ~170 MB.
-2. **Install from URL** — `setup.bat` downloads `ChessistEngine.exe` + React UI from a GitHub Release, and `stockfish.exe` from official Stockfish releases.
-3. **Self-healing engine** — if `stockfish.exe` is deleted, `ChessistEngine.exe` re-downloads it automatically on next start, with WS progress broadcast.
+2. **Install from URL** — `setup.bat` downloads `ChessingEngine.exe` + React UI from a GitHub Release, and `stockfish.exe` from official Stockfish releases.
+3. **Self-healing engine** — if `stockfish.exe` is deleted, `ChessingEngine.exe` re-downloads it automatically on next start, with WS progress broadcast.
 4. **BootstrapGate** — React panel shows a sequential checklist (Engine running → Stockfish ready → Extension detected) with live status.
-5. **Eldritch theme + Chessist purple** — UI matches Eldritch's pitch-black flat aesthetic, using `#792A9E` as the primary accent instead of Eldritch's white.
+5. **Eldritch theme + Chessing purple** — UI matches Eldritch's pitch-black flat aesthetic, using `#792A9E` as the primary accent instead of Eldritch's white.
 
 ---
 
 ## Repo changes
 
 ### Removed from git tracking
-- `engine/bin/` — all compiled output (ChessistEngine.exe, stockfish.exe, ui/)
+- `engine/bin/` — all compiled output (ChessingEngine.exe, stockfish.exe, ui/)
 - `ui/node_modules/` (already covered by `.gitignore` pattern add)
 
 ### Updated `.gitignore`
@@ -34,7 +34,7 @@ native-host/__pycache__/
 ```
 
 ### Added
-- `.github/workflows/release.yml` — builds and publishes ChessistEngine.exe + UI on tag
+- `.github/workflows/release.yml` — builds and publishes ChessingEngine.exe + UI on tag
 
 ---
 
@@ -45,12 +45,12 @@ native-host/__pycache__/
 **Runner:** `windows-latest`
 
 Steps:
-1. `dotnet build engine/ChessistEngine.csproj -c Release` → produces `engine/bin/Release/net48/ChessistEngine.exe`
+1. `dotnet build engine/ChessingEngine.csproj -c Release` → produces `engine/bin/Release/net48/ChessingEngine.exe`
 2. `npm ci && npm run build` in `ui/` → produces `engine/bin/Release/net48/ui/`
-3. Zip `engine/bin/Release/net48/` → `chessist-engine-windows.zip` (contains `ChessistEngine.exe`, `ChessistEngine.exe.config`, `ui/`)
-4. Create GitHub Release with `chessist-engine-windows.zip` as asset
+3. Zip `engine/bin/Release/net48/` → `chessing-engine-windows.zip` (contains `ChessingEngine.exe`, `ChessingEngine.exe.config`, `ui/`)
+4. Create GitHub Release with `chessing-engine-windows.zip` as asset
 
-stockfish.exe is **not** in the Chessist release — always fetched from official-stockfish/Stockfish.
+stockfish.exe is **not** in the Chessing release — always fetched from official-stockfish/Stockfish.
 
 ---
 
@@ -59,7 +59,7 @@ stockfish.exe is **not** in the Chessist release — always fetched from officia
 Four steps, all PowerShell-backed, no user prompts:
 
 ```
-1. Download chessist-engine-windows.zip from latest Chessist GitHub release
+1. Download chessing-engine-windows.zip from latest Chessing GitHub release
    → extracts to engine\bin\Release\net48\
 2. Download latest Stockfish Windows x86-64-avx2 zip from official-stockfish/Stockfish releases
    → extracts stockfish-windows-x86-64-avx2.exe, renames to stockfish.exe
@@ -72,23 +72,23 @@ On re-run, skips downloads if files already exist (checks file presence).
 
 ---
 
-## ChessistEngine.exe — StockfishManager auto-download
+## ChessingEngine.exe — StockfishManager auto-download
 
 If `FindStockfish()` returns null on startup, `TryStart()` triggers a download:
 
 1. `GET https://api.github.com/repos/official-stockfish/Stockfish/releases/latest`  
-   with `User-Agent: ChessistEngine/1.0`
+   with `User-Agent: ChessingEngine/1.0`
 2. Parse response with regex to find `browser_download_url` matching `*windows*x86-64*avx2*.zip`  
    (fallback: first `.zip` asset containing `windows`)
 3. Download zip with `HttpClient`, report progress every 5% via `SendStatus("downloading", "Stockfish X%")`
-4. Extract using `ZipFile.ExtractToDirectory`, find `*.exe` in extracted folder, copy to `stockfish.exe` next to ChessistEngine.exe
+4. Extract using `ZipFile.ExtractToDirectory`, find `*.exe` in extracted folder, copy to `stockfish.exe` next to ChessingEngine.exe
 5. Continue with `TryStart()` as normal
 
 Uses `System.Net.Http.HttpClient` and `System.IO.Compression.ZipFile` (both available .NET 4.5+).
 
 ---
 
-## ChessistEngine.exe — Extension detection
+## ChessingEngine.exe — Extension detection
 
 content.js sends `{type:"identify", role:"extension"}` immediately on WS open.  
 `WsServer` tracks `_extensionConnected` (true if any client sent this identify message; reset to false when all such clients disconnect).
@@ -105,7 +105,7 @@ Broadcast on:
 
 ---
 
-## React UI — Eldritch theme + Chessist purple
+## React UI — Eldritch theme + Chessing purple
 
 ### Design language
 
@@ -151,7 +151,7 @@ Dismissed automatically when all checks pass.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  ● CHESSIST                          v1.3.1      │  ← purple dot (glow), white title
+│  ● CHESSING                          v1.3.1      │  ← purple dot (glow), white title
 ├─────────────────────────────────────────────────┤
 │                                                  │
 │  SETUP                                           │  ← fg-muted uppercase label
@@ -160,7 +160,7 @@ Dismissed automatically when all checks pass.
 │  ▣ Stockfish                  downloading 47%    │  ← yellow + purple progress bar
 │  ○ Extension                      waiting        │  ← dim dot + instruction below
 │                                                  │
-│  Load Chessist in chrome://extensions            │  ← shown only when ext not detected
+│  Load Chessing in chrome://extensions            │  ← shown only when ext not detected
 │  then open a game on chess.com or lichess.org    │
 │                                                  │
 └─────────────────────────────────────────────────┘
@@ -170,7 +170,7 @@ Dismissed automatically when all checks pass.
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  ● CHESSIST                        Analyzing     │
+│  ● CHESSING                        Analyzing     │
 ├─────────────────────────────────────────────────┤
 │  ▐███████████████░░░░░░░░  +1.82               │  ← horizontal eval bar, purple fill
 ├─────────────────────────┬───────────────────────┤

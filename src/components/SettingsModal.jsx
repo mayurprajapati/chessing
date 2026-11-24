@@ -10,7 +10,7 @@ const TABS = [
 
 function DeveloperPage() {
   const [open, setOpen] = useState(false)
-  const toggle = async () => { setOpen(await window.chessist.toggleDevTools()) }
+  const toggle = async () => { setOpen(await window.chessing.toggleDevTools()) }
   return (
     <div style={{ padding: 16 }}>
       <div className="scard" style={{ padding: 14 }}>

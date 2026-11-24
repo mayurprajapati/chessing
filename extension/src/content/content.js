@@ -1,4 +1,4 @@
-// Chessist - Content Script
+// Chessing - Content Script
 // Detects Chess.com board, extracts FEN, and displays evaluation bar
 
 (function() {
@@ -150,10 +150,10 @@
       const local = await chrome.storage.local.get(['shouldThrowNextGame', 'shouldWinNextGame']);
       shouldThrowThisGame = false; // reset for this page load; will be set on new game
       if (local.shouldThrowNextGame) {
-        log('Chessist: Throw flag pending from previous game');
+        log('Chessing: Throw flag pending from previous game');
       }
       if (local.shouldWinNextGame) {
-        log('Chessist: Win flag pending from previous game');
+        log('Chessing: Win flag pending from previous game');
       }
     } catch (e) {
       // Using default settings - don't log in case stealth mode is on
@@ -511,10 +511,10 @@
       `;
       document.head.appendChild(script);
       script.remove();
-      console.log('[Chessist AutoMove] page-context script injected');
+      console.log('[Chessing AutoMove] page-context script injected');
       return true;
     } catch (e) {
-      console.log('[Chessist AutoMove] page-context injection failed:', e);
+      console.log('[Chessing AutoMove] page-context injection failed:', e);
       return false;
     }
   }
@@ -557,7 +557,7 @@
         if (!dispatched) autoMoveObservation?.sent(attempt, 'Browser input could not be sent.');
         return; // move registered, done
       }
-      log('Chessist: Move not registered, retrying:', move);
+      log('Chessing: Move not registered, retrying:', move);
       lastAutoMovePosition = null;
       dispatch(true);
       // Second check: if still stuck, unblock and force re-eval
@@ -570,11 +570,11 @@
             // The board keeps rejecting input here (not our pieces, the game is
             // not active, or the move is illegal). Wait for the position to change
             // instead of re-evaluating and dragging again every second.
-            log('Chessist: Auto-move failed', _failedAutoMove.count, 'times, waiting for the position to change');
+            log('Chessing: Auto-move failed', _failedAutoMove.count, 'times, waiting for the position to change');
             lastAutoMovePosition = positionKeyBefore;
             return;
           }
-          log('Chessist: Retry also failed, forcing re-eval');
+          log('Chessing: Retry also failed, forcing re-eval');
           lastAutoMovePosition = null;
           if (currentFen) requestEval(currentFen);
         }
@@ -593,7 +593,7 @@
     const toSquare = move.substring(2, 4);
     const promotion = move.length > 4 ? move[4] : null;
 
-    log(`Chessist: Auto-moving ${fromSquare} to ${toSquare}${promotion ? ' promoting to ' + promotion : ''}`);
+    log(`Chessing: Auto-moving ${fromSquare} to ${toSquare}${promotion ? ' promoting to ' + promotion : ''}`);
 
     // Method 1: Try Chess.com's game API directly
     try {
@@ -602,7 +602,7 @@
         return true;
       }
     } catch (e) {
-      log('Chessist: Game API move failed:', e);
+      log('Chessing: Game API move failed:', e);
     }
 
     // Method 2: Simulate drag via pointer events
@@ -655,7 +655,7 @@
   function simulateMove(board, from, to, isFlipped, promotion) {
     const pieceEl = findPieceOnSquare(board, from);
     if (!pieceEl) {
-      log('Chessist: Could not find piece on', from);
+      log('Chessing: Could not find piece on', from);
       return false;
     }
 
@@ -676,7 +676,7 @@
       toY = boardRect.top + (7 - toRank + 0.5) * squareSize;
     }
 
-    log(`Chessist: Simulating drag from (${fromX.toFixed(0)},${fromY.toFixed(0)}) to (${toX.toFixed(0)},${toY.toFixed(0)})`);
+    log(`Chessing: Simulating drag from (${fromX.toFixed(0)},${fromY.toFixed(0)}) to (${toX.toFixed(0)},${toY.toFixed(0)})`);
 
     pieceEl.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, view: window, clientX: fromX, clientY: fromY, pointerId: 1, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1 }));
     pieceEl.dispatchEvent(new MouseEvent('mousedown',     { bubbles: true, cancelable: true, view: window, clientX: fromX, clientY: fromY, button: 0, buttons: 1 }));
@@ -818,6 +818,36 @@
     return rights || '-';
   }
 
+  // Main-line moves in SAN up to the ply shown on the board. The player can step
+  // back through the game, so stop at the selected move when there is one.
+  function readMoveListSan() {
+    const selectors = ['.main-line-ply', '.main-line-row .node', 'vertical-move-list .move .node'];
+    for (const selector of selectors) {
+      const nodes = [...document.querySelectorAll(selector)];
+      if (!nodes.length) continue;
+      const selected = nodes.findIndex(node => node.matches('.selected') || node.querySelector('.selected'));
+      return nodes.slice(0, selected >= 0 ? selected + 1 : nodes.length).map(node => {
+        // Figurine notation draws the piece as an icon with the letter in data-figurine.
+        const figurine = node.querySelector('[data-figurine]')?.dataset.figurine || '';
+        const text = node.querySelector('.node-highlight-content')?.textContent ?? node.textContent;
+        return figurine + text;
+      });
+    }
+    return [];
+  }
+
+  // The board alone cannot show a king or rook that moved and came back. Puzzles
+  // start from a set position, so their move lists are not a game from move one.
+  function castlingRightsWithHistory(boardRights) {
+    const history = globalThis.ChessingMoveHistory;
+    if (!history || boardRights === '-' || isPuzzleMode()) return boardRights;
+    try {
+      return history.castlingRights(boardRights, readMoveListSan());
+    } catch (_) {
+      return boardRights;
+    }
+  }
+
   // Parse piece positions from DOM elements
   function parsePiecesFromDOM(board, { onlyThisBoard = false } = {}) {
     // Try multiple selectors for pieces
@@ -899,8 +929,8 @@
     // Determine whose turn from move indicators
     const turn = detectTurn();
 
-    // Determine castling rights based on king/rook positions
-    const castlingRights = determineCastlingRights(boardArray);
+    // Castling rights: king/rook squares, minus any right the move list shows was lost
+    const castlingRights = castlingRightsWithHistory(determineCastlingRights(boardArray));
 
     // Basic FEN with minimal info (position + turn + castling)
     fen += ` ${turn} ${castlingRights} - 0 1`;
@@ -930,11 +960,11 @@
   function detectPlayerColor() {
     // Manual override takes priority
     if (manualPlayerColor === 'w') {
-      log('Chessist: Using manual player color: white');
+      log('Chessing: Using manual player color: white');
       return 'w';
     }
     if (manualPlayerColor === 'b') {
-      log('Chessist: Using manual player color: black');
+      log('Chessing: Using manual player color: black');
       return 'b';
     }
 
@@ -943,11 +973,11 @@
     const puzzleColorIcon = document.querySelector('.cc-coach-feedback-detail-icon.cc-coach-feedback-detail-colorToMove');
     if (puzzleColorIcon) {
       if (puzzleColorIcon.classList.contains('cc-coach-feedback-detail-black-to-move')) {
-        log('Chessist: Detected black via puzzle coach (class)');
+        log('Chessing: Detected black via puzzle coach (class)');
         return 'b';
       }
       if (puzzleColorIcon.classList.contains('cc-coach-feedback-detail-white-to-move')) {
-        log('Chessist: Detected white via puzzle coach (class)');
+        log('Chessing: Detected white via puzzle coach (class)');
         return 'w';
       }
     }
@@ -957,11 +987,11 @@
     if (puzzleColorText) {
       const text = puzzleColorText.textContent?.toLowerCase() || '';
       if (text.includes('black to move')) {
-        log('Chessist: Detected black via puzzle coach (text)');
+        log('Chessing: Detected black via puzzle coach (text)');
         return 'b';
       }
       if (text.includes('white to move')) {
-        log('Chessist: Detected white via puzzle coach (text)');
+        log('Chessing: Detected white via puzzle coach (text)');
         return 'w';
       }
     }
@@ -970,11 +1000,11 @@
     const puzzleRushSquare = document.querySelector('.sidebar-status-square-sidebar-square');
     if (puzzleRushSquare) {
       if (puzzleRushSquare.classList.contains('sidebar-status-square-black')) {
-        log('Chessist: Detected black via puzzle rush sidebar (class)');
+        log('Chessing: Detected black via puzzle rush sidebar (class)');
         return 'b';
       }
       if (puzzleRushSquare.classList.contains('sidebar-status-square-white')) {
-        log('Chessist: Detected white via puzzle rush sidebar (class)');
+        log('Chessing: Detected white via puzzle rush sidebar (class)');
         return 'w';
       }
     }
@@ -984,11 +1014,11 @@
     if (puzzleRushHeading) {
       const text = puzzleRushHeading.textContent?.toLowerCase() || '';
       if (text.includes('black to move')) {
-        log('Chessist: Detected black via puzzle rush heading (text)');
+        log('Chessing: Detected black via puzzle rush heading (text)');
         return 'b';
       }
       if (text.includes('white to move')) {
-        log('Chessist: Detected white via puzzle rush heading (text)');
+        log('Chessing: Detected white via puzzle rush heading (text)');
         return 'w';
       }
     }
@@ -998,13 +1028,13 @@
 
     // Method 1: Check if board is flipped - if flipped, player is black
     if (board?.classList.contains('flipped')) {
-      log('Chessist: Detected black via flipped class');
+      log('Chessing: Detected black via flipped class');
       return 'b';
     }
 
     // Method 1b: Check board's flipped attribute or property
     if (board?.hasAttribute('flipped') || board?.flipped === true) {
-      log('Chessist: Detected black via flipped attribute');
+      log('Chessing: Detected black via flipped attribute');
       return 'b';
     }
 
@@ -1021,22 +1051,22 @@
 
           // If rank "1" is near the top (y < 50 in viewBox 0-100), board is flipped
           if (content === '1' && y < 50) {
-            log('Chessist: Detected black via SVG rank 1 at top (y=' + y + ')');
+            log('Chessing: Detected black via SVG rank 1 at top (y=' + y + ')');
             return 'b';
           }
           // If rank "8" is near the top, board is normal (white's view)
           if (content === '8' && y < 50) {
-            log('Chessist: Detected white via SVG rank 8 at top (y=' + y + ')');
+            log('Chessing: Detected white via SVG rank 8 at top (y=' + y + ')');
             return 'w';
           }
           // If file "a" is on the right (x > 50), board is flipped
           if (content === 'a' && x > 50) {
-            log('Chessist: Detected black via SVG file a on right (x=' + x + ')');
+            log('Chessing: Detected black via SVG file a on right (x=' + x + ')');
             return 'b';
           }
           // If file "a" is on the left, board is normal
           if (content === 'a' && x < 50) {
-            log('Chessist: Detected white via SVG file a on left (x=' + x + ')');
+            log('Chessing: Detected white via SVG file a on left (x=' + x + ')');
             return 'w';
           }
         }
@@ -1051,10 +1081,10 @@
         const boardRect = board.getBoundingClientRect();
         // If white king is in the top half of the board visually, player is black
         if (kingRect.top < boardRect.top + boardRect.height / 2) {
-          log('Chessist: Detected black via white king position');
+          log('Chessing: Detected black via white king position');
           return 'b';
         } else {
-          log('Chessist: Detected white via white king position');
+          log('Chessing: Detected white via white king position');
           return 'w';
         }
       }
@@ -1118,17 +1148,17 @@
       try {
         // Chess.com might expose orientation on the element
         if (board.orientation === 'black' || board.getAttribute('orientation') === 'black') {
-          log('Chessist: Detected black via orientation property');
+          log('Chessing: Detected black via orientation property');
           return 'b';
         }
         // Or via a game property
         if (board.game?.getOrientation?.() === 'black' || board.game?.orientation === 'black') {
-          log('Chessist: Detected black via game orientation');
+          log('Chessing: Detected black via game orientation');
           return 'b';
         }
         // Check for board.isFlipped property
         if (board.isFlipped === true) {
-          log('Chessist: Detected black via isFlipped property');
+          log('Chessing: Detected black via isFlipped property');
           return 'b';
         }
       } catch (e) {
@@ -1139,7 +1169,7 @@
     // In puzzle mode, if board orientation checks didn't determine color,
     // use the current turn as player color (you solve for whoever's turn it is)
     if (isPuzzleMode()) {
-      log('Chessist: Puzzle mode - using current turn as player color:', currentTurn);
+      log('Chessing: Puzzle mode - using current turn as player color:', currentTurn);
       return currentTurn;
     }
 
@@ -1343,7 +1373,7 @@
   async function recordGameResult(result) {
     if (gameOverHandled) return;
     gameOverHandled = true;
-    log(`Chessist: Game over - result: ${result}`);
+    log(`Chessing: Game over - result: ${result}`);
 
     try {
       const local = await chrome.storage.local.get(['gameHistory']);
@@ -1360,7 +1390,7 @@
         const lossThreshold = effectiveThreshold(maxConsecutiveLosses, lossRandom);
         throwNext = consecWins >= winThreshold;
         winNext = consecLosses >= lossThreshold;
-        log(`Chessist: W${consecWins}/${winThreshold} L${consecLosses}/${lossThreshold} → throw:${throwNext} win:${winNext}`);
+        log(`Chessing: W${consecWins}/${winThreshold} L${consecLosses}/${lossThreshold} → throw:${throwNext} win:${winNext}`);
       }
 
       await chrome.storage.local.set({ gameHistory: history, shouldThrowNextGame: throwNext, shouldWinNextGame: winNext });
@@ -1503,7 +1533,7 @@
       moveAccuracies = result[key].accuracies || [];
       prevCpWhite = result[key].prevCpWhite ?? null;
       if (moveAccuracies.length > 0) updateAccuracyDisplay(moveAccuracies[moveAccuracies.length - 1]);
-      log('Chessist: Restored accuracy state', moveAccuracies.length, 'moves');
+      log('Chessing: Restored accuracy state', moveAccuracies.length, 'moves');
     }
   }
 
@@ -1541,7 +1571,7 @@
     const nativeEvalInner = document.getElementById('evaluation');
 
     if (nativeEvalContainer && nativeEvalInner) {
-      log('Chessist: Using native Chess.com eval container');
+      log('Chessing: Using native Chess.com eval container');
 
       evalBarContainer = nativeEvalContainer;
       nativeEvalContainer.style.display = 'block';
@@ -1604,7 +1634,7 @@
     }
 
     // Fallback: Create our own eval bar
-    log('Chessist: Creating custom eval bar');
+    log('Chessing: Creating custom eval bar');
 
     // Find the actual board element with dimensions
     let boardElement = board;
@@ -1721,7 +1751,7 @@
     return getGameId() ?? window.location.pathname;
   }
 
-  const autoMoveObservation = globalThis.ChessistMoveObserver?.create({
+  const autoMoveObservation = globalThis.ChessingMoveObserver?.create({
     read() {
       const board = findBoard();
       const premove = board?.querySelector('.premove, [class*="premove"]') ||
@@ -2278,7 +2308,7 @@
         if (shouldWinThisGame) {
           // Win mode: always play the best move, no degradation
           // moveToPlay is already bestMove — nothing to do
-          log('Chessist: Win mode - playing best move');
+          log('Chessing: Win mode - playing best move');
         } else if (shouldThrowThisGame && pv.length >= 3) {
           // Throw mode: pick one of our own moves from deep in the PV.
           // Our moves are at even PV indices (0, 2, 4, ...); skip index 0 (best).
@@ -2287,7 +2317,7 @@
             const throwIdx = Math.min(ourPvMoves.length - 1,
               1 + Math.floor(Math.random() * Math.max(1, ourPvMoves.length - 1)));
             moveToPlay = ourPvMoves[throwIdx];
-            log('Chessist: Throw mode - playing PV even-index', throwIdx * 2, ':', moveToPlay);
+            log('Chessing: Throw mode - playing PV even-index', throwIdx * 2, ':', moveToPlay);
           }
         } else if (targetAccuracy < 100 && pv.length > 1) {
           // Accuracy-based deviation: (100 - accuracy)% chance to pick a worse move
@@ -2299,7 +2329,7 @@
             const pick = Math.min(ourMoves.length - 1, 1 + Math.floor(Math.random() * maxIdx));
             if (pick > 0 && ourMoves[pick]) {
               moveToPlay = ourMoves[pick];
-              log('Chessist: Target accuracy', targetAccuracy, '% - deviating to PV move', pick);
+              log('Chessing: Target accuracy', targetAccuracy, '% - deviating to PV move', pick);
             }
           }
         } else if (skillLevel < 20 && pv.length > 1) {
@@ -2311,7 +2341,7 @@
             const pickIndex = Math.floor(Math.random() * (maxIndex + 1));
             if (pickIndex > 0 && pvMoves[pickIndex]) {
               moveToPlay = pvMoves[pickIndex];
-              log('Chessist: Skill level', skillLevel, '- picking move', pickIndex + 1, 'from PV:', moveToPlay);
+              log('Chessing: Skill level', skillLevel, '- picking move', pickIndex + 1, 'from PV:', moveToPlay);
             }
           }
         }
@@ -2330,24 +2360,24 @@
           // Add ±20% randomness to feel more human
           const randomFactor = 0.8 + (Math.random() * 0.4);
           finalDelay = Math.floor(baseDelay * randomFactor);
-          log('Chessist: Move complexity:', complexity.toFixed(2), '-> delay:', finalDelay, 'ms');
+          log('Chessing: Move complexity:', complexity.toFixed(2), '-> delay:', finalDelay, 'ms');
         } else {
           // Simple random delay within range
           finalDelay = Math.floor(Math.random() * (delayRange + 1)) + minDelayMs;
-          log('Chessist: Random delay:', finalDelay, 'ms');
+          log('Chessing: Random delay:', finalDelay, 'ms');
         }
 
         // Execute move with or without delay based on instantMove setting
         if (instantMove) {
-          log('Chessist: Instant auto-move for', moveToPlay);
+          log('Chessing: Instant auto-move for', moveToPlay);
           hideCountdown();
           _executeMoveVerified(moveToPlay, positionKey);
         } else {
-          log('Chessist: Auto-move triggered for', moveToPlay, 'with delay', finalDelay, 'ms');
+          log('Chessing: Auto-move triggered for', moveToPlay, 'with delay', finalDelay, 'ms');
           startCountdown(finalDelay, positionKey, moveToPlay);
         }
       } else if (!evalMatchesCurrent) {
-        log('Chessist: Skipping auto-move - stale evaluation for different position');
+        log('Chessing: Skipping auto-move - stale evaluation for different position');
       }
     }
   }
@@ -2451,7 +2481,7 @@
       if (currentFenNow) {
         const nowPosition = currentFenNow.split(' ').slice(0, 2).join(' ');
         if (nowPosition !== expectedPosition) {
-          log('Chessist: Position changed, cancelling countdown');
+          log('Chessing: Position changed, cancelling countdown');
           hideCountdown();
           return;
         }
@@ -2462,10 +2492,10 @@
         hideCountdown();
         // The board can flip (new game as Black) while the countdown runs.
         if (!playerColor || currentTurn !== playerColor) {
-          log('Chessist: No longer the player\'s turn, cancelling move:', moveToPlay);
+          log('Chessing: No longer the player\'s turn, cancelling move:', moveToPlay);
           return;
         }
-        log('Chessist: Countdown complete, executing move:', moveToPlay);
+        log('Chessing: Countdown complete, executing move:', moveToPlay);
         _executeMoveVerified(moveToPlay, expectedPosition);
       }
     }, 100);
@@ -2489,7 +2519,7 @@
     const path = window.location.pathname.replace(/^\/[a-z]{2}(?:-[a-z]{2})?(?=\/)/i, '');
     const playPage = /^\/(?:play|live|daily|game\/(?:live|daily))(?:\/|$)/.test(path);
     const practicePage = /^\/play\/(?:computer|coach)(?:\/|$)/.test(path);
-    const notice = document.getElementById('chessist-fair-play-notice');
+    const notice = document.getElementById('chessing-fair-play-notice');
 
     if (!isEnabled || !autoMove || !playPage || practicePage) {
       notice?.remove();
@@ -2498,9 +2528,9 @@
     if (notice) return;
 
     const message = document.createElement('div');
-    message.id = 'chessist-fair-play-notice';
+    message.id = 'chessing-fair-play-notice';
     message.setAttribute('role', 'status');
-    message.textContent = 'Chessist Auto-move is enabled. Chess.com can close accounts for engine assistance during games against other players. ';
+    message.textContent = 'Chessing Auto-move is enabled. Chess.com can close accounts for engine assistance during games against other players. ';
 
     const rules = document.createElement('a');
     rules.href = 'https://support.chess.com/en/articles/8568369-what-do-i-need-to-know-about-fair-play-on-chess-com';
@@ -2513,14 +2543,14 @@
 
   // Show refresh message when extension context is invalidated
   function showEngineStartingMessage() {
-    let el = document.getElementById('chessist-engine-status');
+    let el = document.getElementById('chessing-engine-status');
     if (!el) {
       el = document.createElement('div');
-      el.id = 'chessist-engine-status';
+      el.id = 'chessing-engine-status';
       el.style.cssText = 'position:fixed;bottom:12px;right:12px;background:rgba(0,0,0,.75);color:#fff;font:12px/1.4 sans-serif;padding:6px 10px;border-radius:6px;z-index:99999;pointer-events:none';
       document.body.appendChild(el);
     }
-    el.textContent = '⌛ Chessist: starting engine…';
+    el.textContent = '⌛ Chessing: starting engine…';
     el.style.display = 'block';
     setTimeout(() => { el.style.display = 'none'; }, 4000);
   }
@@ -2547,12 +2577,12 @@
 
     // Check if extension context is still valid
     if (!extensionContextValid || !checkExtensionContext()) {
-      log('Chessist: Extension context invalid, showing refresh message');
+      log('Chessing: Extension context invalid, showing refresh message');
       showRefreshMessage();
       return;
     }
 
-    log('Chessist: Requesting eval for FEN:', fen, isMouseRelease ? '(mouse release)' : '');
+    log('Chessing: Requesting eval for FEN:', fen, isMouseRelease ? '(mouse release)' : '');
 
     // Tell the desktop app the authoritative current position so it can ignore
     // speculative pre-warm evals (which are for future positions).
@@ -2560,7 +2590,7 @@
       try { _overlayWs.send(JSON.stringify({ type: 'position', fen, flipped: _isBoardFlipped() })); } catch (e) {}
     }
 
-    // Use Chessist Engine via WebSocket when connected (lower latency, no IPC)
+    // Use Chessing Engine via WebSocket when connected (lower latency, no IPC)
     if (_overlayWs?.readyState === WebSocket.OPEN) {
       try {
         const key = _fenKey(fen);
@@ -2650,7 +2680,7 @@
             const cls = classifyMove(accuracy, accuracy >= 99);
             drawMoveIconOnBoard(lastMoveToSquare, cls);
           }
-          log(`Chessist: Move accuracy ${accuracy.toFixed(1)}% (before cp ${prevCpWhite}, after cp ${newCpWhite})`);
+          log(`Chessing: Move accuracy ${accuracy.toFixed(1)}% (before cp ${prevCpWhite}, after cp ${newCpWhite})`);
         }
         accuracyEvalPending = false;
       }
@@ -2765,7 +2795,7 @@
 
     // Method 3: Listen for mouse release on board (PRIMARY - most accurate)
     board.addEventListener('mouseup', () => {
-      log('Chessist: Mouse released on board');
+      log('Chessing: Mouse released on board');
       setTimeout(() => checkForPositionChange(true), 100); // Mark as mouse release
     });
 
@@ -2796,7 +2826,7 @@
       autoMoveObservation?.observe();
       const board = findBoard();
       if (!board) {
-        log('Chessist: No board found');
+        log('Chessing: No board found');
         return;
       }
 
@@ -2805,7 +2835,7 @@
       const hasPremove = board.querySelector('.premove, [class*="premove"]') ||
                          board.shadowRoot?.querySelector('.premove, [class*="premove"]');
       if (hasPremove) {
-        log('Chessist: Premove detected, skipping eval');
+        log('Chessing: Premove detected, skipping eval');
         return;
       }
 
@@ -2833,7 +2863,7 @@
 
         // Reset state on new game
         if (isNewGame) {
-          log('Chessist: New game detected, resetting engine');
+          log('Chessing: New game detected, resetting engine');
           lastAutoMovePosition = null;
           hideCountdown();
           currentBestMove = null;
@@ -2854,14 +2884,14 @@
             shouldWinThisGame   = wlBalance && local.shouldWinNextGame  === true;
             // Consume flags
             chrome.storage.local.set({ shouldThrowNextGame: false, shouldWinNextGame: false });
-            if (shouldThrowThisGame) log('Chessist: THROW MODE active for this game');
-            if (shouldWinThisGame)   log('Chessist: WIN MODE active for this game');
+            if (shouldThrowThisGame) log('Chessing: THROW MODE active for this game');
+            if (shouldWinThisGame)   log('Chessing: WIN MODE active for this game');
 
             // Apply ELO matching for this game
             if (matchElo) {
               const elo = detectPlayerElo();
               if (elo) {
-                log('Chessist: Sending ELO', elo, 'to engine');
+                log('Chessing: Sending ELO', elo, 'to engine');
                 chrome.storage.local.set({ detectedElo: elo });
                 if (extensionContextValid && checkExtensionContext()) {
                   chrome.runtime.sendMessage({ type: 'SET_ELO', elo }).catch(() => {});
@@ -2891,7 +2921,7 @@
                             board.getAttribute('data-flipped') === 'true' ||
                             board.hasAttribute('flipped') || board.flipped === true;
           playerColor = isFlipped ? 'b' : 'w';
-          log('Chessist: New game - detected player color from board orientation:', playerColor);
+          log('Chessing: New game - detected player color from board orientation:', playerColor);
         }
 
         // For the starting position, detectTurn() can read the PREVIOUS game's stale
@@ -2925,7 +2955,7 @@
             playerColor = isFlipped ? 'b' : 'w';
           }
         }
-        log('Chessist: Turn:', currentTurn, 'Player:', playerColor || 'spectating');
+        log('Chessing: Turn:', currentTurn, 'Player:', playerColor || 'spectating');
 
         // Update turn indicator for debugging
         if (turnIndicatorEl) {
@@ -2974,7 +3004,7 @@
                 }
               }
             }
-            log('Chessist: Opponent turn - accuracy pending, to square:', lastMoveToSquare);
+            log('Chessing: Opponent turn - accuracy pending, to square:', lastMoveToSquare);
           }
           // Request eval for opponent's position (used by accuracy calc and bar)
           requestEval(fenForEval, isMouseRelease);
@@ -2985,7 +3015,7 @@
         // does not change when the board flips, so re-read the orientation here.
         const orientedColor = _boardOrientationColor(board);
         if (orientedColor !== playerColor) {
-          log('Chessist: Board orientation changed, player color', playerColor, '->', orientedColor);
+          log('Chessing: Board orientation changed, player color', playerColor, '->', orientedColor);
           playerColor = orientedColor;
           hideCountdown();
           lastAutoMovePosition = null;
@@ -3016,7 +3046,7 @@
     if (extensionContextValid && checkExtensionContext()) {
       try {
         await chrome.runtime.sendMessage({ type: 'RESET_ENGINE' });
-        log('Chessist: Engine reset on page load');
+        log('Chessing: Engine reset on page load');
       } catch (e) {
         if (e.message?.includes('Extension context invalidated')) {
           extensionContextValid = false;
@@ -3057,7 +3087,7 @@
       if (board) {
         // Check if evalBar is orphaned (removed from DOM after SPA navigation)
         if (evalBar && !evalBar.isConnected) {
-          log('Chessist: Eval bar orphaned, re-creating');
+          log('Chessing: Eval bar orphaned, re-creating');
           evalBar = null;
           evalBarFill = null;
           evalScore = null;
@@ -3075,7 +3105,7 @@
         } else if (board !== observedBoard) {
           // The eval bar survived but Chess.com replaced the board element, so
           // the MutationObserver and mouse listeners are on a detached node.
-          log('Chessist: Board element replaced, re-observing');
+          log('Chessing: Board element replaced, re-observing');
           observeBoard(board, { replaced: true });
         } else {
           _observeMoveList();
@@ -3136,7 +3166,7 @@
 
       // Random delay 1-3s to look human
       const delay = 1000 + Math.floor(Math.random() * 2000);
-      log('Chessist: Game over detected, clicking', btnName, 'in', delay, 'ms');
+      log('Chessing: Game over detected, clicking', btnName, 'in', delay, 'ms');
 
       setTimeout(() => {
         // Re-check button still exists (modal might have closed)
@@ -3148,7 +3178,7 @@
         if (!btn && autoNewGame) btn = container.querySelector('[data-cy="game-over-modal-new-game-button"]');
         if (btn) {
           simulateButtonClick(btn);
-          log('Chessist: Clicked', btnName);
+          log('Chessing: Clicked', btnName);
 
           // Schedule position checks after click to detect new game board
           setTimeout(() => checkForPositionChange(false), 1000);
@@ -3320,13 +3350,13 @@
             if (autoMove) {
               lastAutoMovePosition = null;
             }
-            log('Chessist: Auto-move', autoMove ? 'enabled' : 'disabled');
+            log('Chessing: Auto-move', autoMove ? 'enabled' : 'disabled');
           }
           // Update playerColor if provided
           if (message.playerColor !== undefined) {
             manualPlayerColor = normalizePlayerColor(message.playerColor);
             playerColor = detectPlayerColor();  // Re-detect with new manual setting
-            log('Chessist: Player color set to', manualPlayerColor, '-> detected as', playerColor);
+            log('Chessing: Player color set to', manualPlayerColor, '-> detected as', playerColor);
             // Update turn indicator
             if (turnIndicatorEl) {
               const isMyTurn = playerColor && currentTurn === playerColor;
@@ -3337,7 +3367,7 @@
           // Update targetDepth if provided
           if (message.engineDepth !== undefined) {
             targetDepth = message.engineDepth;
-            log('Chessist: Target depth updated to', targetDepth);
+            log('Chessing: Target depth updated to', targetDepth);
             // Trigger re-evaluation with new depth if we have a position
             if (currentFen && isEnabled) {
               evalBar?.classList.add('loading');
@@ -3351,19 +3381,19 @@
           // Update instantMove if provided
           if (message.instantMove !== undefined) {
             instantMove = message.instantMove;
-            log('Chessist: Instant move', instantMove ? 'enabled' : 'disabled');
+            log('Chessing: Instant move', instantMove ? 'enabled' : 'disabled');
           }
           if (message.smartTiming !== undefined) {
             smartTiming = message.smartTiming;
-            log('Chessist: Smart timing', smartTiming ? 'enabled' : 'disabled');
+            log('Chessing: Smart timing', smartTiming ? 'enabled' : 'disabled');
           }
           if (message.autoRematch !== undefined) {
             autoRematch = message.autoRematch;
-            log('Chessist: Auto rematch', autoRematch ? 'enabled' : 'disabled');
+            log('Chessing: Auto rematch', autoRematch ? 'enabled' : 'disabled');
           }
           if (message.autoNewGame !== undefined) {
             autoNewGame = message.autoNewGame;
-            log('Chessist: Auto new game', autoNewGame ? 'enabled' : 'disabled');
+            log('Chessing: Auto new game', autoNewGame ? 'enabled' : 'disabled');
           }
           // Update auto-move delay settings if provided
           if (message.autoMoveDelayMin !== undefined) {
@@ -3375,11 +3405,11 @@
           // Update skill level if provided
           if (message.skillLevel !== undefined) {
             skillLevel = message.skillLevel;
-            log('Chessist: Skill level updated to', skillLevel);
+            log('Chessing: Skill level updated to', skillLevel);
           }
           if (message.targetAccuracy !== undefined) {
             targetAccuracy = message.targetAccuracy;
-            log('Chessist: Target accuracy set to', targetAccuracy);
+            log('Chessing: Target accuracy set to', targetAccuracy);
           }
           if (message.wlBalance !== undefined) {
             wlBalance = message.wlBalance;
@@ -3419,7 +3449,7 @@
         } else if (message.type === 'RE_EVALUATE') {
           // Engine switched - trigger re-evaluation of current position
           if (currentFen && isEnabled) {
-            log('Chessist: Re-evaluating after engine switch');
+            log('Chessing: Re-evaluating after engine switch');
             evalBar?.classList.add('loading');
             requestEval(currentFen);
           }
@@ -3469,7 +3499,7 @@
       }
     });
   } catch (e) {
-    log('Chessist: Could not add settings listener - context invalid');
+    log('Chessing: Could not add settings listener - context invalid');
   }
 
   // Start when DOM is ready

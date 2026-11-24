@@ -5,12 +5,12 @@ import Check from '../components/controls/Check'
 const VERSION = '3.0.4'
 // Baked at build time when git is available (see vite.config.js). Empty for source-ZIP builds.
 const BUILD_SHA = (typeof __BUILD_SHA__ === 'string' ? __BUILD_SHA__ : '')
-const RELEASES_URL = 'https://github.com/imluri/Chessist/releases'
+const RELEASES_URL = 'https://github.com/mayurprajapati/chessing/releases'
 
 function Link({ href, children }) {
   return (
     <button
-      onClick={() => window.chessist.openExternal(href)}
+      onClick={() => window.chessing.openExternal(href)}
       style={{ background: 'none', border: 'none', color: 'rgb(var(--accent))', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit' }}
     >
       {children}
@@ -54,8 +54,8 @@ function Updates({ status, onChange }) {
   const logRef = useRef(null)
 
   useEffect(() => {
-    window.chessist.getBeta().then(setBetaState).catch(() => {})
-    return window.chessist.onUpdateLog((line) => {
+    window.chessing.getBeta().then(setBetaState).catch(() => {})
+    return window.chessing.onUpdateLog((line) => {
       const progress = /^Downloading update…(?: (\d+)%)?$/.exec(line.trim())
       if (progress) {
         setDownloadProgress(Number(progress[1] ?? 0))
@@ -70,7 +70,7 @@ function Updates({ status, onChange }) {
     setBusy(true)
     setApplyError('')
     try {
-      onChange(await window.chessist.checkUpdate())
+      onChange(await window.chessing.checkUpdate())
     } catch {
       onChange({ installer: status?.installer, error: 'Could not check for updates. Try again.' })
     } finally {
@@ -83,7 +83,7 @@ function Updates({ status, onChange }) {
     setLog('')
     setDownloadProgress(0)
     try {
-      const result = await window.chessist.applyUpdate(status?.channel === 'stable' ? status.tag : undefined)
+      const result = await window.chessing.applyUpdate(status?.channel === 'stable' ? status.tag : undefined)
       if (!result.ok) {
         setApplyError(result.error || result.message || (result.step
           ? `Update failed at ${result.step}.`
@@ -97,7 +97,7 @@ function Updates({ status, onChange }) {
   }
   const toggleBeta = async (v) => {
     setBetaState(v)
-    await window.chessist.setBeta(v)
+    await window.chessing.setBeta(v)
     check()   // re-evaluate against the new channel
   }
 
@@ -169,7 +169,7 @@ function Updates({ status, onChange }) {
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {(manualUpdate || (applyError && status?.installer && status.available)) && (
-          <button style={btn} onClick={() => window.chessist.openExternal(releaseUrl)}>{status.installer ? 'View release' : 'Download update'}</button>
+          <button style={btn} onClick={() => window.chessing.openExternal(releaseUrl)}>{status.installer ? 'View release' : 'Download update'}</button>
         )}
         {canApply && !applying && (
           <button style={btn} disabled={busy} onClick={apply}>Update &amp; restart</button>
@@ -195,14 +195,14 @@ export default function AboutPage({ updateStatus, onUpdateStatus }) {
     <div className="page-content" style={{ lineHeight: 1.65 }}>
       <header className="page-heading">
         <h1>About</h1>
-        <p>Chessist v{VERSION}</p>
+        <p>Chessing v{VERSION}</p>
       </header>
       <p style={{ color: 'rgb(var(--fg-muted))', margin: '0 8px 14px' }}>
         Live Stockfish evaluation for Chess.com and Lichess — a desktop app with a transparent,
         screen-capture-invisible board overlay.
       </p>
       <div style={{ display: 'grid', gap: 4, padding: '0 8px' }}>
-        <Link href="https://github.com/imluri/Chessist">GitHub repository</Link>
+        <Link href="https://github.com/mayurprajapati/chessing">GitHub repository</Link>
         <Link href="https://stockfishchess.org/">Stockfish (GPL)</Link>
       </div>
 

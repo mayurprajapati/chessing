@@ -1,10 +1,10 @@
-# Chessist v2 — Electron Desktop App Implementation Plan
+# Chessing v2 — Electron Desktop App Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rebuild Chessist as a React+Vite+Electron desktop app that owns Stockfish and the WebSocket server, keeping the native C# overlay as a slim helper process driven over stdin; reorganize the repo and retire all C# engine / native-messaging code.
+**Goal:** Rebuild Chessing as a React+Vite+Electron desktop app that owns Stockfish and the WebSocket server, keeping the native C# overlay as a slim helper process driven over stdin; reorganize the repo and retire all C# engine / native-messaging code.
 
-**Architecture:** Electron main process spawns `stockfish.exe` (Node child_process), runs a `ws` server the browser extension connects to, and spawns a slimmed `ChessistOverlay.exe` it feeds draw commands via stdin. The browser extension becomes a pure WS client. Repo splits into the Electron app (root), `extension/`, and the C# `overlay/` helper.
+**Architecture:** Electron main process spawns `stockfish.exe` (Node child_process), runs a `ws` server the browser extension connects to, and spawns a slimmed `ChessingOverlay.exe` it feeds draw commands via stdin. The browser extension becomes a pure WS client. Repo splits into the Electron app (root), `extension/`, and the C# `overlay/` helper.
 
 **Tech Stack:** Electron, React 18 + Vite, Node `ws` + `child_process` + `extract-zip`, C# .NET 4.8 WinForms (overlay only), electron-builder.
 
@@ -24,7 +24,7 @@
 | Create | `electron/stockfish.js` | Locate/download Stockfish |
 | Create | `electron/engine.js` | Stockfish child process + UCI parse |
 | Create | `electron/wsserver.js` | ws://127.0.0.1:27301 extension bridge |
-| Create | `electron/overlay.js` | Spawn ChessistOverlay.exe + stdin protocol |
+| Create | `electron/overlay.js` | Spawn ChessingOverlay.exe + stdin protocol |
 | Create | `src/main.jsx`, `src/App.jsx` | Renderer root + layout |
 | Create | `src/components/*` | BootstrapGate, EvalPanel, Settings, TitleBar |
 | Create | `src/data/theme.js`, `src/styles/themes.css` | Theme (purple default) |
@@ -34,7 +34,7 @@
 | Modify | `extension/background/service-worker.js` | Keep-alive + EXECUTE_MOVE only |
 | Create | `scripts/build-overlay.ps1` | Dev build of the C# overlay |
 | Modify | `.github/workflows/release.yml` | Build overlay + electron installer |
-| Delete | `host/`, `setup.bat`, `ui/`, `Chessist.sln` (recreated for overlay), `ss1.png`, `ss2.png` | Obsolete |
+| Delete | `host/`, `setup.bat`, `ui/`, `Chessing.sln` (recreated for overlay), `ss1.png`, `ss2.png` | Obsolete |
 
 ---
 
@@ -48,7 +48,7 @@
 - [ ] **Step 1: Create extension/ and move files via git**
 
 ```powershell
-cd "c:\Users\luri\Documents\Programming\Chessist"
+cd "c:\Users\luri\Documents\Programming\Chessing"
 New-Item -ItemType Directory -Force extension
 git mv manifest.json extension/manifest.json
 git mv src extension/src
@@ -72,15 +72,15 @@ git commit -m "chore: move browser extension into extension/"
 
 **Files:**
 - Move: `engine/` → `overlay/`
-- Delete: `host/`, `setup.bat`, `Chessist.sln`, `ss1.png`, `ss2.png`, old `scripts/`
+- Delete: `host/`, `setup.bat`, `Chessing.sln`, `ss1.png`, `ss2.png`, old `scripts/`
 
 - [ ] **Step 1: Move engine → overlay**
 
 ```powershell
-cd "c:\Users\luri\Documents\Programming\Chessist"
+cd "c:\Users\luri\Documents\Programming\Chessing"
 git mv engine/Program.cs overlay/Program.cs
 git mv engine/app.manifest overlay/app.manifest
-git mv engine/ChessistEngine.csproj overlay/ChessistOverlay.csproj
+git mv engine/ChessingEngine.csproj overlay/ChessingOverlay.csproj
 ```
 
 (If `git mv` complains the target dir doesn't exist, create it first with `New-Item -ItemType Directory -Force overlay`.)
@@ -90,7 +90,7 @@ git mv engine/ChessistEngine.csproj overlay/ChessistOverlay.csproj
 ```powershell
 git rm -r host
 git rm setup.bat
-git rm Chessist.sln
+git rm Chessing.sln
 git rm ss1.png ss2.png
 git rm -r scripts 2>$null
 ```
@@ -109,7 +109,7 @@ git commit -m "chore: move engine to overlay/, remove host/setup.bat/sln/screens
 ### Task 3: Slim the C# overlay to overlay-only + stdin loop
 
 **Files:**
-- Modify: `overlay/ChessistOverlay.csproj`
+- Modify: `overlay/ChessingOverlay.csproj`
 - Modify: `overlay/Program.cs`
 
 The current `Program.cs` (≈1470 lines) contains `OverlayForm`, `StockfishManager`, `TrayApp`, `SettingsForm`, `DebugLog`, `WsServer`, `HostBridge`, `Program.Main`, and the data contracts `EvalBarMsg`, `ArrowMsg`, `WsMsg`, `EvalData`, `EvalResponse`, `EngineStatusMsg`. We KEEP `OverlayForm`, `DebugLog`, `EvalBarMsg`, `ArrowMsg`, `WsMsg`. We DELETE `StockfishManager`, `TrayApp`, `SettingsForm`, `WsServer`, `HostBridge`, `EvalData`, `EvalResponse`, `EngineStatusMsg`. We REPLACE `Program.Main` with a stdin-driven loop.
@@ -199,15 +199,15 @@ In `OverlayForm`, confirm `public void Apply(WsMsg msg)` exists and is public. I
 
 - [ ] **Step 5: Update the csproj assembly name**
 
-Edit `overlay/ChessistOverlay.csproj`: change `<AssemblyName>ChessistEngine</AssemblyName>` to `<AssemblyName>ChessistOverlay</AssemblyName>` and `<RootNamespace>ChessistEngine</RootNamespace>` to `<RootNamespace>ChessistOverlay</RootNamespace>`. Remove the `Microsoft.Web.WebView2` PackageReference and the `System.Net.Http`/`System.IO.Compression` references added earlier (no longer needed). Final csproj:
+Edit `overlay/ChessingOverlay.csproj`: change `<AssemblyName>ChessingEngine</AssemblyName>` to `<AssemblyName>ChessingOverlay</AssemblyName>` and `<RootNamespace>ChessingEngine</RootNamespace>` to `<RootNamespace>ChessingOverlay</RootNamespace>`. Remove the `Microsoft.Web.WebView2` PackageReference and the `System.Net.Http`/`System.IO.Compression` references added earlier (no longer needed). Final csproj:
 
 ```xml
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
-    <AssemblyName>ChessistOverlay</AssemblyName>
-    <RootNamespace>ChessistEngine</RootNamespace>
+    <AssemblyName>ChessingOverlay</AssemblyName>
+    <RootNamespace>ChessingEngine</RootNamespace>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <Optimize>true</Optimize>
@@ -222,22 +222,22 @@ Edit `overlay/ChessistOverlay.csproj`: change `<AssemblyName>ChessistEngine</Ass
 </Project>
 ```
 
-Note: keep `<RootNamespace>ChessistEngine</RootNamespace>` because the existing `namespace ChessistEngine` in Program.cs is unchanged — renaming the namespace would require editing every class. Only the assembly (output exe) name changes to `ChessistOverlay.exe`.
+Note: keep `<RootNamespace>ChessingEngine</RootNamespace>` because the existing `namespace ChessingEngine` in Program.cs is unchanged — renaming the namespace would require editing every class. Only the assembly (output exe) name changes to `ChessingOverlay.exe`.
 
 - [ ] **Step 6: Build**
 
 ```powershell
-dotnet build overlay/ChessistOverlay.csproj -c Release
+dotnet build overlay/ChessingOverlay.csproj -c Release
 ```
 
-Expected: 0 errors, produces `overlay/bin/Release/net48/ChessistOverlay.exe`.
+Expected: 0 errors, produces `overlay/bin/Release/net48/ChessingOverlay.exe`.
 
 Fix any compile errors from dangling references to the deleted classes (e.g., if `OverlayForm` or `DebugLog` referenced a deleted type — they should not, but resolve any that appear).
 
 - [ ] **Step 7: Smoke-test the stdin protocol**
 
 ```powershell
-$p = Start-Process "overlay/bin/Release/net48/ChessistOverlay.exe" -PassThru
+$p = Start-Process "overlay/bin/Release/net48/ChessingOverlay.exe" -PassThru
 Start-Sleep -Milliseconds 800
 $p.HasExited   # expect False (window pump running, waiting on stdin)
 $p.Kill()
@@ -248,7 +248,7 @@ Expected: process stays alive. (Full draw verification happens in end-to-end tes
 - [ ] **Step 8: Commit**
 
 ```powershell
-git add overlay/Program.cs overlay/ChessistOverlay.csproj
+git add overlay/Program.cs overlay/ChessingOverlay.csproj
 git commit -m "feat: slim overlay to overlay-only C# helper driven via stdin"
 ```
 
@@ -268,7 +268,7 @@ git commit -m "feat: slim overlay to overlay-only C# helper driven via stdin"
 
 ```json
 {
-  "name": "chessist",
+  "name": "chessing",
   "version": "2.0.0",
   "private": true,
   "main": "electron/main.js",
@@ -297,11 +297,11 @@ git commit -m "feat: slim overlay to overlay-only C# helper driven via stdin"
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "dev.chessist.app",
-    "productName": "Chessist",
+    "appId": "dev.chessing.app",
+    "productName": "Chessing",
     "files": ["dist/**/*", "electron/**/*", "package.json"],
     "extraResources": [
-      { "from": "overlay/bin/Release/net48/ChessistOverlay.exe", "to": "overlay/ChessistOverlay.exe" }
+      { "from": "overlay/bin/Release/net48/ChessingOverlay.exe", "to": "overlay/ChessingOverlay.exe" }
     ],
     "win": { "target": "nsis" },
     "directories": { "output": "release" }
@@ -331,7 +331,7 @@ export default defineConfig({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chessist</title>
+  <title>Chessing</title>
 </head>
 <body>
   <div id="root"></div>
@@ -369,7 +369,7 @@ function createWindow() {
     height: 640,
     minWidth: 380,
     minHeight: 520,
-    title: 'Chessist',
+    title: 'Chessing',
     backgroundColor: '#000000',
     frame: false,
     titleBarStyle: 'hidden',
@@ -417,7 +417,7 @@ module.exports = { getMainWindow: () => mainWindow }
 ```javascript
 const { contextBridge, ipcRenderer } = require('electron')
 
-contextBridge.exposeInMainWorld('chessist', {
+contextBridge.exposeInMainWorld('chessing', {
   isDesktop: true,
   platform: process.platform,
   minimizeWindow: () => ipcRenderer.send('window:minimize'),
@@ -501,7 +501,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
 export default function App() {
   return (
     <div style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 16, letterSpacing: '0.08em' }}>CHESSIST</h1>
+      <h1 style={{ fontSize: 16, letterSpacing: '0.08em' }}>CHESSING</h1>
       <p style={{ color: 'rgb(var(--fg-muted))', fontSize: 13, marginTop: 8 }}>
         Desktop app skeleton.
       </p>
@@ -522,7 +522,7 @@ npm install
 npm run dev
 ```
 
-Expected: a Vite server starts on :5173 and an Electron window opens showing "CHESSIST". Close it (Ctrl+C in terminal). If it launches, the skeleton works.
+Expected: a Vite server starts on :5173 and an Electron window opens showing "CHESSING". Close it (Ctrl+C in terminal). If it launches, the skeleton works.
 
 - [ ] **Step 14: Commit**
 
@@ -600,7 +600,7 @@ function pickWindowsAsset(assets) {
 
 function httpsJson(url) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Chessist/2.0' } }, (res) => {
+    https.get(url, { headers: { 'User-Agent': 'Chessing/2.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return resolve(httpsJson(res.headers.location))
       }
@@ -613,7 +613,7 @@ function httpsJson(url) {
 
 function download(url, dest, onProgress) {
   return new Promise((resolve, reject) => {
-    https.get(url, { headers: { 'User-Agent': 'Chessist/2.0' } }, (res) => {
+    https.get(url, { headers: { 'User-Agent': 'Chessing/2.0' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         return resolve(download(res.headers.location, dest, onProgress))
       }
@@ -888,8 +888,8 @@ const path = require('path')
 const fs = require('fs')
 
 function resolveOverlayExe(isDev, resourcesPath) {
-  const devPath = path.join(__dirname, '..', 'overlay', 'bin', 'Release', 'net48', 'ChessistOverlay.exe')
-  const prodPath = path.join(resourcesPath, 'overlay', 'ChessistOverlay.exe')
+  const devPath = path.join(__dirname, '..', 'overlay', 'bin', 'Release', 'net48', 'ChessingOverlay.exe')
+  const prodPath = path.join(resourcesPath, 'overlay', 'ChessingOverlay.exe')
   if (isDev && fs.existsSync(devPath)) return devPath
   if (fs.existsSync(prodPath)) return prodPath
   if (fs.existsSync(devPath)) return devPath
@@ -1048,7 +1048,7 @@ function pushStatus(patch) {
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 460, height: 640, minWidth: 380, minHeight: 520,
-    title: 'Chessist', backgroundColor: '#000000',
+    title: 'Chessing', backgroundColor: '#000000',
     frame: false, titleBarStyle: 'hidden', autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -1107,7 +1107,7 @@ app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(
 
 - [ ] **Step 3: Add status:get to preload**
 
-In `electron/preload.js`, add inside the `chessist` object:
+In `electron/preload.js`, add inside the `chessing` object:
 ```javascript
   getStatus: () => ipcRenderer.invoke('status:get'),
 ```
@@ -1148,10 +1148,10 @@ export default function TitleBar() {
       borderBottom: '1px solid rgb(var(--border))',
     }}>
       <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgb(var(--accent))', boxShadow: '0 0 8px rgba(var(--accent),0.6)' }} />
-      <span style={{ marginLeft: 8, fontWeight: 700, fontSize: 12, letterSpacing: '0.08em' }}>CHESSIST</span>
+      <span style={{ marginLeft: 8, fontWeight: 700, fontSize: 12, letterSpacing: '0.08em' }}>CHESSING</span>
       <div style={{ marginLeft: 'auto', display: 'flex', WebkitAppRegion: 'no-drag' }}>
-        <button onClick={() => window.chessist.minimizeWindow()} style={btn}>—</button>
-        <button onClick={() => window.chessist.closeWindow()} style={{ ...btn, ...closeBtn }}>✕</button>
+        <button onClick={() => window.chessing.minimizeWindow()} style={btn}>—</button>
+        <button onClick={() => window.chessing.closeWindow()} style={{ ...btn, ...closeBtn }}>✕</button>
       </div>
     </div>
   )
@@ -1190,7 +1190,7 @@ export default function BootstrapGate({ status }) {
       <Step label="Extension" status={ext} />
       {!status.extensionConnected && (
         <div style={{ marginTop: 16, padding: '10px 12px', border: '1px solid rgb(var(--border))', background: 'rgb(var(--surface))', fontSize: 12, color: 'rgb(var(--fg-muted))', lineHeight: 1.6 }}>
-          Load Chessist in <span style={{ color: 'rgb(var(--fg))', fontFamily: 'monospace' }}>chrome://extensions</span> then open a game on chess.com or lichess.org.
+          Load Chessing in <span style={{ color: 'rgb(var(--fg))', fontFamily: 'monospace' }}>chrome://extensions</span> then open a game on chess.com or lichess.org.
         </div>
       )}
     </div>
@@ -1251,9 +1251,9 @@ export default function App() {
   const [ev, setEv] = useState(null)
 
   useEffect(() => {
-    window.chessist.getStatus().then(setStatus)
-    const offS = window.chessist.onStatus(setStatus)
-    const offE = window.chessist.onEval(setEv)
+    window.chessing.getStatus().then(setStatus)
+    const offS = window.chessing.onStatus(setStatus)
+    const offE = window.chessing.onEval(setEv)
     return () => { offS(); offE() }
   }, [])
 
@@ -1311,7 +1311,7 @@ In `extension/manifest.json`: set `"version": "2.0.0"`. Remove `"nativeMessaging
 Replace `extension/src/background/service-worker.js` with a minimal version (keep-alive + auto-move only):
 
 ```javascript
-// Chessist - Service Worker (v2)
+// Chessing - Service Worker (v2)
 // The desktop app owns the engine. This worker only keeps content scripts alive
 // and executes auto-moves via scripting.
 
@@ -1439,8 +1439,8 @@ git commit -m "feat: extension v2 — drop native messaging, slim service worker
 # Builds the C# overlay helper for local dev.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-dotnet build (Join-Path $root 'overlay/ChessistOverlay.csproj') -c Release
-Write-Host "Overlay built: overlay/bin/Release/net48/ChessistOverlay.exe"
+dotnet build (Join-Path $root 'overlay/ChessingOverlay.csproj') -c Release
+Write-Host "Overlay built: overlay/bin/Release/net48/ChessingOverlay.exe"
 ```
 
 - [ ] **Step 2: Rewrite .github/workflows/release.yml**
@@ -1471,7 +1471,7 @@ jobs:
           node-version: '20'
 
       - name: Build overlay helper
-        run: dotnet build overlay/ChessistOverlay.csproj -c Release
+        run: dotnet build overlay/ChessingOverlay.csproj -c Release
 
       - name: Install app deps
         run: npm ci
@@ -1512,24 +1512,24 @@ git rm -r ui
 Replace `README.md` with:
 
 ```markdown
-<p align="center"><img src="extension/icons/icon128.png" width="96" height="96" alt="Chessist"></p>
-<h1 align="center">Chessist</h1>
+<p align="center"><img src="extension/icons/icon128.png" width="96" height="96" alt="Chessing"></p>
+<h1 align="center">Chessing</h1>
 <p align="center">Live Stockfish evaluation for Chess.com and Lichess — a desktop app + browser extension.</p>
 
 ---
 
 ## What it is
 
-- **Chessist desktop app** (Electron) — runs Stockfish, shows live eval, and draws a transparent,
+- **Chessing desktop app** (Electron) — runs Stockfish, shows live eval, and draws a transparent,
   screen-capture-invisible overlay on the board.
-- **Chessist browser extension** — reads the board on chess.com / lichess.org and talks to the app.
+- **Chessing browser extension** — reads the board on chess.com / lichess.org and talks to the app.
 
 Windows 10/11. The overlay is Windows-only.
 
 ## Install
 
-1. Download and run the latest **Chessist installer** from the [Releases](https://github.com/imluri/Chessist/releases) page.
-2. Open the Chessist app. It downloads Stockfish on first run.
+1. Download and run the latest **Chessing installer** from the [Releases](https://github.com/imluri/Chessist/releases) page.
+2. Open the Chessing app. It downloads Stockfish on first run.
 3. Load the extension: `chrome://extensions` → Developer mode → **Load unpacked** → select the `extension/` folder.
 4. Open a game on chess.com or lichess.org.
 
@@ -1548,7 +1548,7 @@ Build an installer: `npm run dist` (output in `release/`).
 ## Project structure
 
 ```
-Chessist/
+Chessing/
 ├── electron/      # Electron main process (engine, ws server, overlay driver)
 ├── src/           # React renderer (main window)
 ├── overlay/       # C# overlay helper (transparent, capture-invisible window)
@@ -1571,7 +1571,7 @@ Add at the top:
 
 ### Changed
 - **Rebuilt as an Electron desktop app** (React + Vite) — owns Stockfish and the WebSocket server
-- **Overlay is now a slim C# helper** (`ChessistOverlay.exe`) driven by the desktop app over stdin — same transparent, screen-capture-invisible window
+- **Overlay is now a slim C# helper** (`ChessingOverlay.exe`) driven by the desktop app over stdin — same transparent, screen-capture-invisible window
 - **No setup.bat, no native messaging** — the app downloads Stockfish on first run; the extension is a pure WebSocket client
 - **Repo reorganized** — Electron app at root, browser extension under `extension/`, overlay under `overlay/`
 - Removed the C# engine, native-messaging host, and WASM remnants
@@ -1614,7 +1614,7 @@ Enable auto-move. Expected: the app's best move is played on the board.
 
 - [ ] **Step 5: Confirm no stray processes on quit**
 
-Close the Chessist app. In Task Manager, confirm `stockfish.exe` and `ChessistOverlay.exe` are gone.
+Close the Chessing app. In Task Manager, confirm `stockfish.exe` and `ChessingOverlay.exe` are gone.
 
 - [ ] **Step 6: Done — no commit needed**
 
@@ -1640,4 +1640,4 @@ Close the Chessist app. In Task Manager, confirm `stockfish.exe` and `ChessistOv
 | Delete engine/host/ui/setup.bat | Tasks 2, 12 |
 
 **Placeholder scan:** No TBDs; all code blocks complete.
-**Type consistency:** `Engine`, `Overlay`, `Bridge`, `ensureStockfish`, `parseInfoLine`, `pickWindowsAsset`, the `componentStatus` shape (`stockfishOk`/`overlayOk`/`extensionConnected`/`message`), and the preload `chessist.*` API are consistent across tasks.
+**Type consistency:** `Engine`, `Overlay`, `Bridge`, `ensureStockfish`, `parseInfoLine`, `pickWindowsAsset`, the `componentStatus` shape (`stockfishOk`/`overlayOk`/`extensionConnected`/`message`), and the preload `chessing.*` API are consistent across tasks.

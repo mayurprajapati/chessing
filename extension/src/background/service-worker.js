@@ -1,4 +1,4 @@
-// Chessist - Service Worker (v2)
+// Chessing - Service Worker (v2)
 // The desktop app owns the engine. This worker keeps content scripts alive,
 // executes auto-moves, and holds a presence connection to the desktop app so the
 // app detects the extension on ANY page (not just chess.com / lichess.org).
@@ -82,8 +82,8 @@ chrome.runtime.onInstalled.addListener(connectPresence)
 
 // Backup wake: an alarm revives the worker periodically and reconnects if needed.
 try {
-  chrome.alarms.create('chessist-presence', { periodInMinutes: 0.5 })
-  chrome.alarms.onAlarm.addListener((a) => { if (a.name === 'chessist-presence') connectPresence() })
+  chrome.alarms.create('chessing-presence', { periodInMinutes: 0.5 })
+  chrome.alarms.onAlarm.addListener((a) => { if (a.name === 'chessing-presence') connectPresence() })
 } catch (e) {}
 
 // Also connect when this worker script first loads.

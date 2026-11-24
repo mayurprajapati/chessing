@@ -1,8 +1,8 @@
-// Chessist Overlay — C# / .NET 4.8 / GDI+
+// Chessing Overlay — C# / .NET 4.8 / GDI+
 // Transparent overlay window driven by newline-delimited JSON draw commands on stdin.
-// The Electron app spawns ChessistOverlay.exe and writes WsMsg JSON to its stdin.
+// The Electron app spawns ChessingOverlay.exe and writes WsMsg JSON to its stdin.
 // Build:  dotnet build -c Release
-//         output: overlay\bin\Release\net48\ChessistOverlay.exe
+//         output: overlay\bin\Release\net48\ChessingOverlay.exe
 
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ using System.Text;
 using System.Threading;
 using System.Windows.Forms;
 
-namespace ChessistEngine
+namespace ChessingEngine
 {
     // ── JSON data contracts ──────────────────────────────────────────────────────
 
@@ -130,7 +130,7 @@ namespace ChessistEngine
         int  _manualOffsetY;
 
         static string IniPath => Path.Combine(
-            Path.GetDirectoryName(Application.ExecutablePath)!, "ChessistEngine.ini");
+            Path.GetDirectoryName(Application.ExecutablePath)!, "ChessingEngine.ini");
 
         static void ReadIni(out bool manualMap, out int offsetX, out int offsetY)
         {
@@ -518,7 +518,7 @@ namespace ChessistEngine
         public static bool Enabled { get; private set; }
 
         public static readonly string LogPath = Path.Combine(
-            Path.GetDirectoryName(Application.ExecutablePath)!, "ChessistEngine.log");
+            Path.GetDirectoryName(Application.ExecutablePath)!, "ChessingEngine.log");
 
         static StreamWriter? _writer;
 
@@ -528,9 +528,9 @@ namespace ChessistEngine
         {
             Enabled = true;
             AllocConsole();
-            Console.Title = "Chessist Overlay — Debug";
+            Console.Title = "Chessing Overlay — Debug";
             Console.ForegroundColor = ConsoleColor.Cyan;
-            Console.WriteLine("=== Chessist Overlay Debug ===");
+            Console.WriteLine("=== Chessing Overlay Debug ===");
             Console.WriteLine("Reading draw commands from stdin...\n");
             Console.ResetColor();
         }
@@ -540,7 +540,7 @@ namespace ChessistEngine
             try
             {
                 _writer = new StreamWriter(LogPath, append: false) { AutoFlush = true };
-                _writer.WriteLine($"=== Chessist Overlay Log — {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
+                _writer.WriteLine($"=== Chessing Overlay Log — {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===");
             }
             catch { }
         }

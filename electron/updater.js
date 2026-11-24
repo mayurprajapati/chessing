@@ -5,7 +5,7 @@ const { installerAsset, installerPath, clearInstallerFiles, downloadInstaller, l
 
 const ROOT = path.join(__dirname, '..')        // repo root (when run from source)
 const NPM = process.platform === 'win32' ? 'npm.cmd' : 'npm'
-const REPO = 'imluri/Chessist'
+const REPO = 'mayurprajapati/chessing'
 const LATEST_RELEASE = `https://api.github.com/repos/${REPO}/releases/latest`
 const UPDATE_VERSION_CHANGED = 'The available version changed. Check for updates again.'
 
@@ -22,7 +22,7 @@ function installedOnWindows() {
   const { app } = require('electron')
   // An unpacked build also has app.isPackaged. NSIS adds the adjacent uninstaller.
   return process.platform === 'win32' && app?.isPackaged &&
-    fs.existsSync(path.join(path.dirname(app.getPath('exe')), 'Uninstall Chessist.exe'))
+    fs.existsSync(path.join(path.dirname(app.getPath('exe')), 'Uninstall Chessing.exe'))
 }
 
 function githubFetch(url, options = {}) {
@@ -30,7 +30,7 @@ function githubFetch(url, options = {}) {
   const request = {
     ...options,
     credentials: 'omit',
-    headers: { 'User-Agent': 'Chessist', ...options.headers },
+    headers: { 'User-Agent': 'Chessing', ...options.headers },
   }
   return net ? net.fetch(url, request) : fetch(url, request)
 }
@@ -84,7 +84,7 @@ async function applyInstallerUpdate(onLog, expectedTag) {
   if (status.error) return { ok: false, error: status.error }
   if (expectedTag && expectedTag !== status.tag) return { ok: false, error: UPDATE_VERSION_CHANGED }
   if (!status.available) return { ok: false, error: 'There is no newer release available.' }
-  if (!asset) return { ok: false, error: 'The release does not have a compatible installer that Chessist can verify.' }
+  if (!asset) return { ok: false, error: 'The release does not have a compatible installer that Chessing can verify.' }
 
   const { app } = require('electron')
   const file = installerPath(app.getPath('userData'))

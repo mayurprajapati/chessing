@@ -1,4 +1,4 @@
-# Chessist Rearchitecture: Native-only Engine + React UI
+# Chessing Rearchitecture: Native-only Engine + React UI
 
 **Date:** 2026-06-08  
 **Status:** Approved — ready for implementation plan  
@@ -8,7 +8,7 @@
 
 ## Goals
 
-1. **Remove WASM** — `ChessistEngine.exe` (native Stockfish) is the sole analysis engine.
+1. **Remove WASM** — `ChessingEngine.exe` (native Stockfish) is the sole analysis engine.
 2. **Remove Python** — the exe doubles as its own native-messaging host (HostBridge mode).
 3. **React+Vite UI** — the overlay's eval bar and arrows move from GDI+ C# drawing to a React app rendered via WebView2.
 4. **Frictionless install** — `git clone` → load unpacked → `setup.bat` (zero prompts) → eval works.
@@ -29,7 +29,7 @@ Browser Extension
  └── popup.html/js  (minimal: status + settings)
           │ chrome.runtime.connectNative
           ▼
-ChessistEngine.exe  (two modes, one binary)
+ChessingEngine.exe  (two modes, one binary)
  ├── [host-bridge mode]  ← Chrome native-messaging invocation
  │     • stdin/stdout length-prefixed JSON loop
  │     • launch / restart / kill the normal-mode instance
@@ -54,7 +54,7 @@ ChessistEngine.exe  (two modes, one binary)
 ## Repository Structure (after reorganization)
 
 ```
-Chessist/                         ← extension root ("Load unpacked" points here)
+Chessing/                         ← extension root ("Load unpacked" points here)
 ├── manifest.json                 ← "key" added for pinned ID
 ├── README.md  CHANGELOG.md  .gitignore  LICENSE
 ├── setup.bat                     ← fully non-interactive, no Python required
@@ -65,14 +65,14 @@ Chessist/                         ← extension root ("Load unpacked" points her
 │   ├── popup/  popup.html  popup.js  popup.css
 │   └── options/  options.html  options.js  options.css
 ├── engine/                       ← renamed from overlay/
-│   ├── ChessistEngine.csproj     ← renamed from ChessistOverlay.csproj
+│   ├── ChessingEngine.csproj     ← renamed from ChessingOverlay.csproj
 │   ├── Program.cs  app.manifest
 │   └── bin/Release/net48/
-│        ├── ChessistEngine.exe   ← committed (prebuilt)
-│        ├── ChessistEngine.exe.config
+│        ├── ChessingEngine.exe   ← committed (prebuilt)
+│        ├── ChessingEngine.exe.config
 │        └── stockfish.exe        ← committed (bundled)
 ├── host/                         ← renamed from native-host/
-│   └── com.chessist.engine.json  ← renamed manifest, pinned extension ID
+│   └── com.chessing.engine.json  ← renamed manifest, pinned extension ID
 ├── ui/                           ← NEW: React+Vite source
 │   ├── src/  App.tsx  main.tsx  components/
 │   ├── index.html
@@ -82,7 +82,7 @@ Chessist/                         ← extension root ("Load unpacked" points her
 │   ├── start.bat
 │   ├── start_debug.bat
 │   └── rebuild.bat
-└── Chessist.sln                  ← updated path reference
+└── Chessing.sln                  ← updated path reference
 ```
 
 **Deleted files:**
@@ -98,7 +98,7 @@ Chessist/                         ← extension root ("Load unpacked" points her
 - `engine/bin/Release/net48/*.pdb`
 - `engine/bin/Release/net48/*.ini`
 - `engine/bin/Release/net48/*.log`
-- `engine/bin/Release/net48/ChessistOverlay.log`
+- `engine/bin/Release/net48/ChessingOverlay.log`
 
 ---
 
@@ -106,13 +106,13 @@ Chessist/                         ← extension root ("Load unpacked" points her
 
 Generate a 2048-bit RSA keypair. Embed the DER-encoded public key (base64) in `manifest.json` as `"key"`. Chrome derives a deterministic extension ID from this key — the same ID on every machine, every install.
 
-The `host/com.chessist.engine.json` `allowed_origins` hardcodes this ID, so setup.bat needs no user input.
+The `host/com.chessing.engine.json` `allowed_origins` hardcodes this ID, so setup.bat needs no user input.
 
 The private key is **not** committed to the repo.
 
 ---
 
-## ChessistEngine.exe — HostBridge Mode
+## ChessingEngine.exe — HostBridge Mode
 
 Chrome passes the calling extension's origin (`chrome-extension://<ID>/`) as an argument when launching a native-messaging host. `Main()` detects this:
 
@@ -125,13 +125,13 @@ if (isHost) { HostBridge.Run(); return; }
 
 `HostBridge.Run()` performs the stdio length-prefixed JSON loop (4-byte LE length + UTF-8 JSON), handling messages: `launch`, `restart`, `kill`, `quit`.
 
-A named mutex `"ChessistEngineInstance"` (session-scoped):
+A named mutex `"ChessingEngineInstance"` (session-scoped):
 - Normal mode acquires it on startup; second instance exits immediately.
 - HostBridge checks `Mutex.TryOpenExisting` to answer "is engine running?".
 
 ---
 
-## ChessistEngine.exe — Normal Mode Changes
+## ChessingEngine.exe — Normal Mode Changes
 
 ### OverlayForm: WebView2 replaces GDI+
 
@@ -139,7 +139,7 @@ A named mutex `"ChessistEngineInstance"` (session-scoped):
 - `OverlayForm` no longer does any GDI+ drawing.
 - The form hosts a `WebView2` control that fills it, with transparent background.
 - Window transparency: `WS_EX_LAYERED | WS_EX_TRANSPARENT` (click-through, unchanged Win32 approach). `SetLayeredWindowAttributes(LWA_COLORKEY, ColorKey=Color.Black)` makes the form background transparent. WebView2 `DefaultBackgroundColor = Color.FromArgb(0,0,0,0)`.
-- Navigates to the bundled React app via virtual host: `SetVirtualHostNameToFolderMapping("chessist.local", uiPath, HostResourceAccessKind.Allow)` → `Navigate("https://chessist.local/index.html")`.
+- Navigates to the bundled React app via virtual host: `SetVirtualHostNameToFolderMapping("chessing.local", uiPath, HostResourceAccessKind.Allow)` → `Navigate("https://chessing.local/index.html")`.
 
 ### OverlayForm.Apply() — new behaviour
 
@@ -262,12 +262,12 @@ Vite builds to `ui/dist/`. The rebuild script copies `ui/dist/` → `engine/bin/
 
 ```
 1. Resolve absolute paths (ROOT_DIR from %~dp0)
-2. Write host/com.chessist.engine.json with absolute engine path + hardcoded pinned ID
+2. Write host/com.chessing.engine.json with absolute engine path + hardcoded pinned ID
 3. Register HKCU NativeMessagingHosts key for Chrome + Brave + Edge
 4. Done — no Python, no ID prompt, no Stockfish step
 ```
 
-Optional `--startup` flag: `setup.bat --startup` adds ChessistEngine.exe to Windows startup.
+Optional `--startup` flag: `setup.bat --startup` adds ChessingEngine.exe to Windows startup.
 
 ---
 
@@ -275,7 +275,7 @@ Optional `--startup` flag: `setup.bat --startup` adds ChessistEngine.exe to Wind
 
 ```
 1. git clone  (exe + stockfish.exe already present in engine/bin/Release/net48/)
-2. chrome://extensions → Load unpacked → select Chessist folder  (ID is fixed)
+2. chrome://extensions → Load unpacked → select Chessing folder  (ID is fixed)
 3. setup.bat  (no prompts, ~2 seconds)
 4. Open chess.com / lichess — engine auto-launches, WS connects, eval appears
 ```
@@ -285,7 +285,7 @@ Optional `--startup` flag: `setup.bat --startup` adds ChessistEngine.exe to Wind
 ## Error Handling
 
 - **WebView2 runtime missing** → `CoreWebView2InitializationCompleted` handler shows a message box with download link; overlay falls back to hidden.
-- **Exe missing** → HostBridge replies `{success:false, error:'ChessistEngine.exe not found'}`; popup shows build instructions.
+- **Exe missing** → HostBridge replies `{success:false, error:'ChessingEngine.exe not found'}`; popup shows build instructions.
 - **Stockfish not found by exe** → existing `engine_status: error` broadcast; popup shows error.
 - **Engine crash / WS drop** → content.js reconnects every 3 s; on repeated failure re-sends `LAUNCH_ENGINE` (backoff after 3 attempts).
 - **Duplicate instance** → named mutex; second normal-mode exe exits silently.

@@ -8,7 +8,7 @@
 
 ## Goal
 
-Make the Chessist **desktop app the single settings authority**. The browser extension becomes a
+Make the Chessing **desktop app the single settings authority**. The browser extension becomes a
 thin client: its popup shows only connectivity, and its content scripts obey settings pushed from
 the app over the existing WebSocket. The extension's settings popup controls and options page are
 removed.
@@ -17,7 +17,7 @@ removed.
 
 ## Architecture
 
-- **App owns + persists all settings** (`userData/chessist-settings.json`, `{ engine, game }`).
+- **App owns + persists all settings** (`userData/chessing-settings.json`, `{ engine, game }`).
 - **Engine params** (skill, ELO, threads, hash) are applied to Stockfish directly in the app
   (already done by the Engine page).
 - **Game/display settings** (depth, arrows, auto-move + timing, render mode, player color, master
@@ -60,7 +60,7 @@ Engine params (skill, ELO, threads, hash) stay in the existing engine-settings o
 - Add `broadcastSettings(data)` to push to all extension clients on change.
 
 ### electron/main.js
-- Add `gameSettings` (defaults above), loaded from `chessist-settings.json` `game` key.
+- Add `gameSettings` (defaults above), loaded from `chessing-settings.json` `game` key.
 - Restructure persistence to `{ engine: {...}, game: {...} }`.
 - IPC: `game:get` → returns gameSettings; `game:set` ({key,value}) → update + persist + broadcast.
 - Give the bridge `getGameSettings = () => gameSettings`.
@@ -82,7 +82,7 @@ Engine params (skill, ELO, threads, hash) stay in the existing engine-settings o
   overrides them once connected. (Niche settings still come from storage until the follow-up.)
 
 ### extension/src/popup/ (connectivity only)
-- `popup.html` / `popup.js` reduced to: a status dot + "Connected to Chessist" / "Not connected",
+- `popup.html` / `popup.js` reduced to: a status dot + "Connected to Chessing" / "Not connected",
   app name/version, and a short hint to open the desktop app. It checks connectivity by opening a
   WebSocket to `ws://127.0.0.1:27301` (closes immediately after).
 - All settings controls removed. `popup.css` trimmed.

@@ -1,4 +1,4 @@
-# Chessist v2 — Electron Desktop App
+# Chessing v2 — Electron Desktop App
 
 **Date:** 2026-06-08
 **Status:** Approved — ready for implementation plan
@@ -8,12 +8,12 @@
 
 ## Goals
 
-Convert Chessist from a C# WinForms engine + browser-only UI into a **React + Vite + Electron
+Convert Chessing from a C# WinForms engine + browser-only UI into a **React + Vite + Electron
 desktop app** (modeled on `Eldritch`), while preserving the signature transparent, screen-capture-
 invisible overlay drawn on the chess board.
 
 1. Electron desktop app owns the engine (Stockfish), the WebSocket server, and all UI.
-2. The overlay stays **native** — a slim C# helper process (`ChessistOverlay.exe`) the Electron app
+2. The overlay stays **native** — a slim C# helper process (`ChessingOverlay.exe`) the Electron app
    drives over stdin. Pixel-exact, capture-invisible, zero overlay regression.
 3. No `setup.bat`, no native-messaging host. The app handles setup (Stockfish download) in-app via a
    BootstrapGate. The browser extension is a pure WebSocket client.
@@ -36,18 +36,18 @@ invisible overlay drawn on the chess board.
 │  popup / options    (settings)                       │
 └───────────────────────┬──────────────────────────────┘
                         │ WebSocket (ws://127.0.0.1:27301)
-┌─ Chessist Desktop App (Electron, root project) ──────┐
+┌─ Chessing Desktop App (Electron, root project) ──────┐
 │  electron/main.js                                     │
 │   ├─ wsserver.js  — WS server (extension bridge)      │
 │   ├─ engine.js    — spawns stockfish.exe, parses UCI  │
 │   ├─ stockfish.js — locate/download Stockfish         │
-│   └─ overlay.js   — spawns ChessistOverlay.exe,        │
+│   └─ overlay.js   — spawns ChessingOverlay.exe,        │
 │                     streams draw JSON to its stdin     │
 │  Main window (React, opaque, frameless) — Eldritch-style│
 │   • BootstrapGate · EvalPanel · Settings · TitleBar    │
 └───────────────────────┬───────────────────────────────┘
                         │ spawn + stdin (newline JSON)
-┌─ ChessistOverlay.exe (C#, overlay-only) ─────────────┐
+┌─ ChessingOverlay.exe (C#, overlay-only) ─────────────┐
 │  • transparent layered window (WDA_EXCLUDEFROMCAPTURE)│
 │  • finds Chrome render-widget HWND, tracks position   │
 │  • draws eval bar + arrows over the board             │
@@ -64,7 +64,7 @@ moved into the new `overlay/` project and fed by stdin instead of WebSocket.
 ## Repository structure (after reorg)
 
 ```
-Chessist/
+Chessing/
 ├── package.json            # Electron app — scripts, deps, electron-builder config
 ├── vite.config.js          # renderer build (base './', dev port 5173)
 ├── index.html              # main-window entry
@@ -74,7 +74,7 @@ Chessist/
 │   ├── wsserver.js         # ws://127.0.0.1:27301 — receives from extension
 │   ├── engine.js           # Stockfish child process + UCI parse + eval broadcast
 │   ├── stockfish.js        # locate stockfish.exe; download from GitHub if missing
-│   └── overlay.js          # spawn ChessistOverlay.exe; write draw JSON to stdin
+│   └── overlay.js          # spawn ChessingOverlay.exe; write draw JSON to stdin
 ├── src/                    # main-window React renderer
 │   ├── main.jsx  App.jsx
 │   ├── components/         # BootstrapGate, EvalPanel, Settings, TitleBar, Sidebar, icons
@@ -83,7 +83,7 @@ Chessist/
 │   └── lib/                # engine client (IPC), settings helpers
 ├── public/                 # logo.png, fonts/instrument-sans.woff2
 ├── overlay/                # C# overlay helper (slimmed from old engine/)
-│   ├── ChessistOverlay.csproj   # net48, WinExe
+│   ├── ChessingOverlay.csproj   # net48, WinExe
 │   ├── Program.cs               # OverlayForm + Win32 + stdin JSON loop
 │   └── app.manifest
 ├── extension/              # browser extension (load unpacked from here)
@@ -94,7 +94,7 @@ Chessist/
 └── docs/
 ```
 
-**Deleted:** `engine/` (C# ChessistEngine), `host/`, `ui/` (absorbed into `src/`), root
+**Deleted:** `engine/` (C# ChessingEngine), `host/`, `ui/` (absorbed into `src/`), root
 `manifest.json` + root `src/` extension code (moved to `extension/`), `setup.bat`, old `scripts/`
 batch launchers tied to the C# exe.
 
@@ -143,7 +143,7 @@ session, with the transposition table preserved across moves:
   `userData/stockfish.exe`. (Ports the C# `DownloadStockfishAsync` logic to Node.)
 
 ### electron/overlay.js
-- Resolves `ChessistOverlay.exe`: `process.resourcesPath/overlay/` in prod, `overlay/bin/Release/net48/`
+- Resolves `ChessingOverlay.exe`: `process.resourcesPath/overlay/` in prod, `overlay/bin/Release/net48/`
   in dev. If absent, overlay mode is reported unavailable (graceful).
 - Spawns it once; writes newline-delimited JSON draw commands to its stdin. Restarts on crash.
 - Kill on app quit.
@@ -181,7 +181,7 @@ session, with the transposition table preserved across moves:
 2. Stockfish UCI → engine parses → `{type:'eval',data}` → wsserver broadcasts to extension + IPC to
    main window EvalPanel.
 3. Extension (overlay mode) sends draw payload `{viewX,viewY,width,height,dpr,flipped,evalBar,arrows}`
-   → wsserver → overlay.js → `ChessistOverlay.exe` stdin → native window draws over board.
+   → wsserver → overlay.js → `ChessingOverlay.exe` stdin → native window draws over board.
 4. Extension (browser mode) draws arrows/eval in-page itself (unchanged).
 
 ---
@@ -191,7 +191,7 @@ session, with the transposition table preserved across moves:
 - **Dev:** `npm run dev` = `concurrently` Vite (5173) + Electron (Eldritch pattern). A
   `scripts/build-overlay.ps1` builds the C# overlay into `overlay/bin/Release/net48/` for dev.
 - **Build:** `npm run dist` = `vite build && electron-builder` → NSIS installer.
-  electron-builder `extraResources` copies `overlay/bin/Release/net48/ChessistOverlay.exe` into the
+  electron-builder `extraResources` copies `overlay/bin/Release/net48/ChessingOverlay.exe` into the
   packaged app's `resources/overlay/`.
 - **CI:** `.github/workflows/release.yml` on `v*.*.*` tag (windows-latest): `setup-dotnet` builds the
   overlay, `setup-node` + `npm ci` + `npm run dist` builds the installer, publishes the NSIS `.exe`
@@ -207,7 +207,7 @@ session, with the transposition table preserved across moves:
 - **Stockfish download fails** → BootstrapGate shows error + retry; engine reports `engine_status:error`.
 - **Overlay exe missing/crashes** → overlay mode marked unavailable in UI; app + browser-mode rendering
   still work; overlay.js auto-restarts on crash.
-- **Extension not connected** → BootstrapGate shows "Load Chessist in chrome://extensions".
+- **Extension not connected** → BootstrapGate shows "Load Chessing in chrome://extensions".
 - **Port 27301 in use** → wsserver surfaces a clear error in the main window.
 
 ---

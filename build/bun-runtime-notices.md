@@ -1,6 +1,6 @@
 # Bun runtime notices
 
-The Chessist WebSocket worker embeds Bun 1.4.4. The worker's entry point is
+The Chessing WebSocket worker embeds Bun 1.4.4. The worker's entry point is
 `electron/bun-ws-worker.cjs`, and `npm run build:ws-worker` builds the executable
 from source. To use a custom Bun build for the compilation, run the build script
 with that Bun executable.

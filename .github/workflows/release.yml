@@ -23,7 +23,7 @@ jobs:
           node-version: '20'
 
       - name: Build overlay helper
-        run: dotnet build overlay/ChessistOverlay.csproj -c Release
+        run: dotnet build overlay/ChessingOverlay.csproj -c Release
 
       - name: Install app deps
         run: npm ci
@@ -35,6 +35,6 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/Chessist Setup *-x64.exe
+          files: release/Chessing Setup *-x64.exe
           fail_on_unmatched_files: true
           generate_release_notes: true

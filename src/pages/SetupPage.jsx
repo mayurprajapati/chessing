@@ -40,7 +40,7 @@ function StockfishModule({ status }) {
     setBusy(true)
     setActionError('')
     try {
-      await window.chessist.redownloadStockfish()
+      await window.chessing.redownloadStockfish()
     } catch (error) {
       setActionError(operationError(error, 'Could not re-download Stockfish.'))
     } finally {
@@ -82,7 +82,7 @@ function DiagnosticsModule() {
     let mounted = true
     async function loadStatus() {
       try {
-        const { enabled } = await window.chessist.getDiagnosticsStatus()
+        const { enabled } = await window.chessing.getDiagnosticsStatus()
         if (mounted) setEnabled(enabled)
       } catch (failure) {
         if (mounted) setError(operationError(failure, 'Could not load diagnostics settings.'))
@@ -97,7 +97,7 @@ function DiagnosticsModule() {
     setError('')
     setExported(false)
     try {
-      const { enabled } = await window.chessist.setDiagnosticsEnabled(recording)
+      const { enabled } = await window.chessing.setDiagnosticsEnabled(recording)
       setEnabled(enabled)
     } catch (failure) {
       setError(operationError(failure, 'Could not change diagnostics recording.'))
@@ -111,7 +111,7 @@ function DiagnosticsModule() {
     setError('')
     setExported(false)
     try {
-      const { saved } = await window.chessist.exportDiagnostics()
+      const { saved } = await window.chessing.exportDiagnostics()
       setExported(saved)
     } catch (failure) {
       setError(operationError(failure, 'Could not export diagnostics.'))
@@ -164,8 +164,8 @@ function OverlayModule({ status }) {
 const PERFORMANCE_PHASES = {
   local: 'Measuring the local connection…',
   stockfish: 'Analyzing offline positions with Stockfish…',
-  foreground: 'Keep Chessist in front while it measures desktop updates.',
-  background: 'Optional: switch to another window for background samples. Keep Chessist visible beside it.',
+  foreground: 'Keep Chessing in front while it measures desktop updates.',
+  background: 'Optional: switch to another window for background samples. Keep Chessing visible beside it.',
 }
 
 function isScoreVisible(element) {
@@ -192,8 +192,8 @@ function PerformanceModule() {
   }, [phase])
 
   useEffect(() => {
-    const offPhase = window.chessist.onPerformancePhase?.(setPhase)
-    const offFrame = window.chessist.onPerformanceFrame?.(({ id, score: value }) => setFrame({
+    const offPhase = window.chessing.onPerformancePhase?.(setPhase)
+    const offFrame = window.chessing.onPerformanceFrame?.(({ id, score: value }) => setFrame({
       id, value, focused: document.hasFocus(), visible: document.visibilityState === 'visible',
     }))
     return () => {
@@ -208,7 +208,7 @@ function PerformanceModule() {
     const firstPaint = requestAnimationFrame(() => {
       nextPaint = requestAnimationFrame(() => {
         const focused = document.hasFocus()
-        window.chessist.finishPerformanceFrame?.(frame.id, {
+        window.chessing.finishPerformanceFrame?.(frame.id, {
           focused,
           visible: frame.visible && frame.focused === focused && isScoreVisible(score.current),
         })
@@ -227,7 +227,7 @@ function PerformanceModule() {
     setResult(null)
     setError('')
     try {
-      setResult(await window.chessist.runPerformanceCheck())
+      setResult(await window.chessing.runPerformanceCheck())
     } catch (failure) {
       setError(operationError(failure, 'The performance check could not finish.'))
     } finally {
@@ -247,7 +247,7 @@ function PerformanceModule() {
         Measure the local Bun connection, Stockfish on offline positions, and desktop update latency. Results stay on this PC.
       </p>
       <p style={{ ...description, marginTop: 6 }}>
-        This check measures local work. For site and network latency, use Lichess’s lag check. Keep Chessist in front until asked to switch windows.
+        This check measures local work. For site and network latency, use Lichess’s lag check. Keep Chessing in front until asked to switch windows.
       </p>
       <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 12 }}>
         <button type="button" disabled={running} onClick={runCheck} style={{
@@ -256,7 +256,7 @@ function PerformanceModule() {
         }}>
           {running ? 'Running check…' : result ? 'Run again' : 'Run performance check'}
         </button>
-        <button type="button" disabled={running} onClick={() => window.chessist.openExternal('https://lichess.org/lag')} style={btn}>
+        <button type="button" disabled={running} onClick={() => window.chessing.openExternal('https://lichess.org/lag')} style={btn}>
           Open Lichess lag check
         </button>
       </div>
@@ -279,11 +279,11 @@ function ExtensionModule({ status }) {
   const [copied, setCopied] = useState('')
   const [showInstructions, setShowInstructions] = useState(false)
   useEffect(() => {
-    window.chessist.getExtensionPath().then(setExtPath)
-    window.chessist.getFirefoxPath?.().then(setFfPath)
+    window.chessing.getExtensionPath().then(setExtPath)
+    window.chessing.getFirefoxPath?.().then(setFfPath)
   }, [])
 
-  const copy = (text, tag) => { window.chessist.copyText(text); setCopied(tag); setTimeout(() => setCopied(''), 1500) }
+  const copy = (text, tag) => { window.chessing.copyText(text); setCopied(tag); setTimeout(() => setCopied(''), 1500) }
   const connected = status.extensionConnected
   const needsUpdate = status.extensionUpdateAvailable
 
@@ -316,7 +316,7 @@ function ExtensionModule({ status }) {
         <div style={{ marginBottom: !needsUpdate && !showInstructions ? 0 : 10 }}>
           <p style={{ fontSize: 12, color: 'rgb(var(--fg-muted))', lineHeight: 1.6 }}>
             {needsUpdate
-              ? 'If Chessist still shows an older version in your browser, reload the extension. If the version stays the same, load the bundled folder below.'
+              ? 'If Chessing still shows an older version in your browser, reload the extension. If the version stays the same, load the bundled folder below.'
               : 'The extension is connected. Open or refresh a chess tab on Chess.com or Lichess to start analysis.'}
           </p>
           {!needsUpdate && (
@@ -340,7 +340,7 @@ function ExtensionModule({ status }) {
               <Step n={3}>Click <strong style={{ color: 'rgb(var(--fg))' }}>Load unpacked</strong> and select the folder below.</Step>
               <PathBox path={extPath} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button style={btn} onClick={() => window.chessist.revealExtensionFolder()}>Open folder</button>
+                <button style={btn} onClick={() => window.chessing.revealExtensionFolder()}>Open folder</button>
                 <button style={btn} onClick={() => copy(extPath, 'path')}>{copied === 'path' ? 'Copied ✓' : 'Copy path'}</button>
                 <button style={btn} onClick={() => copy('chrome://extensions', 'url')}>{copied === 'url' ? 'Copied ✓' : 'Copy chrome://extensions'}</button>
               </div>
@@ -355,7 +355,7 @@ function ExtensionModule({ status }) {
               <Step n={3}>Open the folder below and select its <strong style={{ color: 'rgb(var(--fg))' }}>manifest.json</strong>.</Step>
               <PathBox path={ffPath} />
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                <button style={btn} onClick={() => window.chessist.revealFirefoxFolder()}>Open folder</button>
+                <button style={btn} onClick={() => window.chessing.revealFirefoxFolder()}>Open folder</button>
                 <button style={btn} onClick={() => copy(ffPath, 'ffpath')}>{copied === 'ffpath' ? 'Copied ✓' : 'Copy path'}</button>
                 <button style={btn} onClick={() => copy('about:debugging#/runtime/this-firefox', 'ffurl')}>{copied === 'ffurl' ? 'Copied ✓' : 'Copy about:debugging'}</button>
               </div>

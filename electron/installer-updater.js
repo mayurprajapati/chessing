@@ -10,7 +10,7 @@ function installerAsset(release, arch) {
   const version = /^v(\d+\.\d+\.\d+)$/.exec(release.tag_name)?.[1]
   if (!version || !['x64', 'arm64', 'ia32'].includes(arch)) return null
 
-  const base = `Chessist Setup ${version}`
+  const base = `Chessing Setup ${version}`
   const names = [`${base}-${arch}.exe`]
   // Releases before the filename included the architecture shipped x64 installers.
   if (arch === 'x64') names.push(`${base}.exe`)
@@ -23,7 +23,7 @@ function installerAsset(release, arch) {
 }
 
 function installerPath(userData) {
-  return path.join(userData, 'chessist-update.exe')
+  return path.join(userData, 'chessing-update.exe')
 }
 
 async function clearInstallerFiles(file) {

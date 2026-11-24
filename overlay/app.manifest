@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
-  <assemblyIdentity version="1.0.0.0" name="ChessistOverlay.exe"/>
+  <assemblyIdentity version="1.0.0.0" name="ChessingOverlay.exe"/>
   <application xmlns="urn:schemas-microsoft-com:asm.v3">
     <windowsSettings>
       <!-- Tell Windows this app handles DPI itself — no auto-scaling -->

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import SettingsPanel from '../../ui-template/src/SettingsPanel'
 import { formatSettingValue, SETTINGS_GROUPS } from '../data/settingControls'
-import './ChessistSettings.css'
+import './ChessingSettings.css'
 
 function settingsGroup(id, label, settings) {
   return {
@@ -49,7 +49,7 @@ function DeveloperSettings({ onToggleDevTools }) {
         <h2>Developer Tools</h2>
         <p>Inspect the renderer and view console logs in Chrome DevTools.</p>
       </header>
-      <div className="chessist-developer-actions">
+      <div className="chessing-developer-actions">
         <button type="button" className="button button-primary" disabled={busy} onClick={toggle}>
           {open === null ? 'Toggle DevTools' : open ? 'Close DevTools' : 'Open DevTools'}
         </button>
@@ -59,13 +59,13 @@ function DeveloperSettings({ onToggleDevTools }) {
   )
 }
 
-export default function ChessistSettings({
+export default function ChessingSettings({
   gameSettings,
   engineSettings,
   onGameChange,
   onEngineChange,
   loadError,
-  windowApi = window.chessist,
+  windowApi = window.chessing,
 }) {
   const [group, setGroup] = useState('game')
   const values = group === 'game' ? gameSettings : engineSettings
@@ -77,12 +77,12 @@ export default function ChessistSettings({
 
   function renderGroupContent({ id }) {
     if (id === 'developer') return <DeveloperSettings onToggleDevTools={() => windowApi.toggleDevTools()} />
-    if (!values) return <p className="chessist-settings-loading" role="status">{loadError || 'Loading settings…'}</p>
+    if (!values) return <p className="chessing-settings-loading" role="status">{loadError || 'Loading settings…'}</p>
     return null
   }
 
   return (
-    <div className="page-content chessist-settings">
+    <div className="page-content chessing-settings">
       <header className="page-heading">
         <h1>Settings</h1>
         <p>Customize game analysis, display, and Stockfish.</p>

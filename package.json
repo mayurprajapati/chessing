@@ -1,5 +1,5 @@
 {
-  "name": "chessist",
+  "name": "chessing",
   "version": "3.0.4",
   "private": true,
   "main": "electron/main.js",
@@ -33,18 +33,18 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "dev.chessist.app",
-    "productName": "Chessist",
+    "appId": "dev.chessing.app",
+    "productName": "Chessing",
     "files": ["dist/**/*", "electron/**/*", "package.json"],
     "extraResources": [
-      { "from": "overlay/bin/Release/net48/ChessistOverlay.exe", "to": "overlay/ChessistOverlay.exe" },
+      { "from": "overlay/bin/Release/net48/ChessingOverlay.exe", "to": "overlay/ChessingOverlay.exe" },
       { "from": "extension", "to": "extension" },
       { "from": "firefox", "to": "firefox" },
       { "from": "release/bun-ws-worker.exe", "to": "bun-ws-worker.exe" },
       { "from": "build/bun-runtime-notices.md", "to": "bun-runtime-notices.md" }
     ],
     "win": { "target": "nsis", "icon": "build/icon.ico" },
-    "nsis": { "artifactName": "Chessist Setup ${version}-${arch}.${ext}" },
+    "nsis": { "artifactName": "Chessing Setup ${version}-${arch}.${ext}" },
     "directories": { "output": "release", "buildResources": "build" }
   }
 }

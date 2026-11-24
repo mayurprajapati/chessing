@@ -3,14 +3,14 @@ const status = document.getElementById('status')
 const hint = document.getElementById('hint')
 
 const engineStatus = {
-  starting: ['waiting', 'Stockfish is starting', 'The Chessist app is connected. Analysis will start when Stockfish is ready.'],
-  retrying: ['waiting', 'Stockfish is restarting', 'Check the Setup tab in Chessist for details.'],
-  downloading: ['waiting', 'Downloading Stockfish', 'Check the Setup tab in Chessist for download progress.'],
+  starting: ['waiting', 'Stockfish is starting', 'The Chessing app is connected. Analysis will start when Stockfish is ready.'],
+  retrying: ['waiting', 'Stockfish is restarting', 'Check the Setup tab in Chessing for details.'],
+  downloading: ['waiting', 'Downloading Stockfish', 'Check the Setup tab in Chessing for download progress.'],
   ready: ['ok', 'Stockfish is ready', 'Open a board on Chess.com or Lichess to start analysis.'],
-  error: ['off', 'Stockfish is unavailable', 'Open the Setup tab in Chessist to see the error and retry.'],
+  error: ['off', 'Stockfish is unavailable', 'Open the Setup tab in Chessing to see the error and retry.'],
 }
-const appOffline = ['off', 'Can’t reach the Chessist app', 'Open the Chessist desktop app and check again.']
-const engineUnknown = ['waiting', 'Chessist app connected', 'Check the Setup tab in Chessist for Stockfish status.']
+const appOffline = ['off', 'Can’t reach the Chessing app', 'Open the Chessing desktop app and check again.']
+const engineUnknown = ['waiting', 'Chessing app connected', 'Check the Setup tab in Chessing for Stockfish status.']
 
 function check() {
   let settled = false

@@ -98,7 +98,7 @@ class PerformanceCheck {
 
     result.display.foreground = await this._displayPhase('foreground', 2100)
     result.display.background = await this._displayPhase('background', 8000)
-    if (this.active && !result.display.foreground) result.warnings.push('Foreground display: keep Chessist in focus and the sample in view during this phase.')
+    if (this.active && !result.display.foreground) result.warnings.push('Foreground display: keep Chessing in focus and the sample in view during this phase.')
     if (this.active && !result.display.background) result.warnings.push('Background display: switch focus to another window while keeping the sample in view.')
     return result
   }

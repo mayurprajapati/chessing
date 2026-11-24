@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron')
 
-contextBridge.exposeInMainWorld('chessist', {
+contextBridge.exposeInMainWorld('chessing', {
   isDesktop: true,
   platform: process.platform,
   getStatus: () => ipcRenderer.invoke('status:get'),

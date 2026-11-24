@@ -11,7 +11,7 @@ function setup(before = ordinary, move = 'e2e4') {
   const report = vi.fn()
   const fixture = { setTimeout, clearTimeout }
   runInNewContext(source, fixture)
-  const observer = fixture.ChessistMoveObserver.create({ read: () => snapshot, report })
+  const observer = fixture.ChessingMoveObserver.create({ read: () => snapshot, report })
   const attempt = observer.begin({ move, before, context: snapshot.context })
   return {
     observer, attempt, report,

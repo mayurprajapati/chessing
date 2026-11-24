@@ -10,7 +10,7 @@ import { downloadInstaller, installerAsset, launchInstaller } from './installer-
 
 const content = Buffer.from('test installer contents')
 const digest = `sha256:${createHash('sha256').update(content).digest('hex')}`
-const asset = { name: 'Chessist.Setup.2.1.0-x64.exe', state: 'uploaded', size: content.length, digest }
+const asset = { name: 'Chessing.Setup.2.1.0-x64.exe', state: 'uploaded', size: content.length, digest }
 
 function mockUpdater({ installed, release, git }) {
   const module = { exports: {} }
@@ -27,9 +27,9 @@ function mockUpdater({ installed, release, git }) {
   })
   const modules = {
     child_process: { spawn }, path,
-    fs: { existsSync: file => path.basename(file) === 'Uninstall Chessist.exe' ? installed : !!git },
+    fs: { existsSync: file => path.basename(file) === 'Uninstall Chessing.exe' ? installed : !!git },
     electron: {
-      app: { getVersion: () => '2.0.9', isPackaged: installed, getPath: () => path.resolve('Chessist.exe') },
+      app: { getVersion: () => '2.0.9', isPackaged: installed, getPath: () => path.resolve('Chessing.exe') },
       net: { fetch },
     },
     './installer-updater': { installerAsset, downloadInstaller: download },
@@ -83,8 +83,8 @@ describe('update preview', () => {
 })
 
 describe('Windows release asset selection', () => {
-  const arm = { ...asset, name: 'Chessist.Setup.2.1.0-arm64.exe' }
-  const legacy = { ...asset, name: 'Chessist.Setup.2.1.0.exe' }
+  const arm = { ...asset, name: 'Chessing.Setup.2.1.0-arm64.exe' }
+  const legacy = { ...asset, name: 'Chessing.Setup.2.1.0.exe' }
   const release = { tag_name: 'v2.1.0', assets: [arm, legacy, asset] }
 
   it('prefers the installer for the running app architecture', () => {
@@ -100,8 +100,8 @@ describe('Windows release asset selection', () => {
 
   it.each([
     { digest: null },
-    { name: 'Chessist.Setup.2.0.0-x64.exe' },
-    { name: 'Uninstall.Chessist.exe' },
+    { name: 'Chessing.Setup.2.0.0-x64.exe' },
+    { name: 'Uninstall.Chessing.exe' },
     { state: 'starter' },
   ])('rejects a mismatched or unverifiable installer (%o)', (override) => {
     expect(installerAsset({ ...release, assets: [{ ...asset, ...override }] }, 'x64')).toBeNull()
@@ -111,7 +111,7 @@ describe('Windows release asset selection', () => {
 describe('staging the update installer', () => {
   let directory, file
   beforeEach(async () => {
-    directory = await mkdtemp(path.join(tmpdir(), 'chessist-update-test-'))
+    directory = await mkdtemp(path.join(tmpdir(), 'chessing-update-test-'))
     file = path.join(directory, 'update.exe')
   })
   afterEach(async () => {

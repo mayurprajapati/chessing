@@ -187,7 +187,7 @@ describe('Stockfish exit recovery', () => {
   const fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 
   async function withFakeStockfish(onSearch, check) {
-    const temp = await mkdtemp(join(tmpdir(), 'chessist-engine-'))
+    const temp = await mkdtemp(join(tmpdir(), 'chessing-engine-'))
     const fixture = join(temp, 'uci.cjs')
     const launches = join(temp, 'launches')
     const priorNodeOptions = process.env.NODE_OPTIONS

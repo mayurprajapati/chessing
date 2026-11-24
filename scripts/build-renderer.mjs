@@ -37,4 +37,4 @@ const { outputs } = await Bun.build({
   }],
 })
 
-console.log(`Built Chessist renderer with Bun (${outputs.length} files).`)
+console.log(`Built Chessing renderer with Bun (${outputs.length} files).`)

@@ -126,5 +126,5 @@
     };
   }
 
-  globalThis.ChessistMoveObserver = { create };
+  globalThis.ChessingMoveObserver = { create };
 })();
