@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Fix Chessing closing immediately after install on PCs where the per-user install folder blocks Chromium's GPU sandbox. The installer now grants the access it needs, as Chrome's installer does. The window icon is now included in the package too.
 - Chessist is now **Chessing**. On first start, Chessing copies your settings and the downloaded Stockfish from the old Chessist folder. Load the bundled extension again from **Setup → Browser extension**, since it is now a new extension.
 - Chessing reads the game's move list to work out castling rights on Chess.com and Lichess. If you castled, or your king or a rook moved and came back, the engine no longer suggests castling for that side.
 - Chess.com Auto-move no longer retries a move that already landed. Chessing checks the live board instead of waiting for its position refresh, which also stops it re-evaluating the previous position after every move.
